@@ -95,11 +95,11 @@ function AssignmentCard({
   return (
     <div
       onClick={handleCardClick}
-      className="bg-white rounded-[32px] p-7 pt-6 relative shadow-[0_2px_12px_rgba(0,0,0,0.02)] border border-gray-100/30 hover:shadow-md hover:border-orange-200 transition-all cursor-pointer flex flex-col justify-between h-[210px]"
+      className="bg-white rounded-[32px] p-6 md:p-7 md:pt-6 relative shadow-[0_2px_12px_rgba(0,0,0,0.02)] border border-gray-100/30 hover:shadow-md hover:border-orange-200 transition-all cursor-pointer flex flex-col justify-between h-[160px] md:h-[210px]"
     >
       {/* Title row */}
       <div className="flex items-start justify-between">
-        <h3 className="text-heading text-gray-900 line-clamp-2 pr-4">{title}</h3>
+        <h3 className="text-heading text-[18px] md:text-heading text-gray-900 line-clamp-2 pr-4">{title}</h3>
         <div className="relative shrink-0">
           <button
             onClick={(e) => {
@@ -138,13 +138,15 @@ function AssignmentCard({
       </div>
 
       {/* Footer Dates */}
-      <div className="flex items-center justify-between text-normal">
-        <div>
+      <div className="flex flex-col md:flex-row md:items-center justify-between text-[13px] md:text-normal mt-auto md:pt-2 gap-1 md:gap-4 md:flex-wrap">
+        <div className="flex-1 min-w-max">
           <span className="font-extrabold text-gray-900">Assigned on</span>
           <span className="text-gray-400"> : {assignedOn}</span>
         </div>
-        <div>
-          <span className="font-extrabold text-gray-900">Due</span>
+        <div className="hidden md:block w-px h-3 bg-gray-200"></div>
+        <div className="flex-1 min-w-max">
+          <span className="font-extrabold text-gray-900 md:inline hidden">Due</span>
+          <span className="font-extrabold text-gray-900 md:hidden">Due</span>
           <span className="text-gray-400"> : {dueDate}</span>
         </div>
       </div>
@@ -153,6 +155,7 @@ function AssignmentCard({
 }
 
 export default function AssignmentsPage() {
+  const router = useRouter()
   const [search, setSearch] = useState("")
 
   const filtered = MOCK_ASSIGNMENTS.filter((a) =>
@@ -163,9 +166,17 @@ export default function AssignmentsPage() {
     <>
       <Header breadcrumb="Assignment" />
 
-      <main className="flex-1 overflow-y-auto px-8 py-7 relative">
-        {/* Page title */}
-        <div className="mb-6 ml-2">
+      <main className="flex-1 overflow-y-auto px-5 md:px-8 py-4 md:py-7 relative h-[calc(100vh-70px)] md:h-full">
+        {/* On Mobile, visual style is exactly as the screenshot: the back arrow, then text */}
+        <div className="md:hidden flex items-center justify-center relative mb-8">
+          <button type="button" onClick={() => router.back()} className="absolute left-0 w-10 h-10 bg-gray-200/50 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-800"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <h1 className="text-heading text-[16px] text-gray-900 font-extrabold">Assignments</h1>
+        </div>
+
+        {/* Page title (Desktop) */}
+        <div className="hidden md:block mb-6 ml-2">
           <div className="flex items-center gap-2 mb-1">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
             <h1 className="text-heading text-gray-900 mt-1">Assignments</h1>
@@ -176,32 +187,31 @@ export default function AssignmentsPage() {
         </div>
 
         {/* Toolbar */}
-        <div className="flex items-center justify-between mx-1 mb-8 bg-white rounded-full shadow-[0_2px_10px_rgba(0,0,0,0.02)] pl-6 pr-2 py-2 border border-gray-100/30">
-          <button className="flex items-center gap-2.5 text-normal text-gray-400 hover:text-gray-700 transition-colors shrink-0">
+        <div className="flex items-center mx-0 md:mx-1 mb-6 md:mb-8 bg-white rounded-2xl md:rounded-full shadow-sm md:shadow-[0_2px_10px_rgba(0,0,0,0.02)] pl-5 md:pl-6 pr-2 py-1 md:py-2 border border-gray-100/30">
+          <button className="flex items-center gap-2 text-normal text-gray-400 hover:text-gray-700 transition-colors shrink-0">
             <ListFilter size={18} strokeWidth={2} />
-            Filter By
+            Filter
           </button>
-          <div className="relative max-w-[360px] w-full">
-            <div className="flex items-center gap-2.5 bg-white border border-gray-100 rounded-full px-5 py-3 w-full shadow-sm">
-              <Search size={18} className="text-gray-300" strokeWidth={2.5} />
-              <input
-                type="text"
-                placeholder="Search Assignment"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="bg-transparent w-full text-normal text-gray-700 placeholder:text-gray-300 outline-none"
-              />
-            </div>
+          <div className="w-px h-6 bg-gray-100 mx-4"></div>
+          <div className="flex items-center gap-2 bg-transparent w-full">
+            <Search size={18} className="text-gray-300" strokeWidth={2.5} />
+            <input
+              type="text"
+              placeholder="Search Name"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="bg-transparent w-full py-3 text-normal text-gray-700 placeholder:text-gray-300 outline-none"
+            />
           </div>
         </div>
 
         {/* Grid */}
-        <div className="grid grid-cols-2 gap-5 px-1 pb-40">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 px-1 pb-40">
           {filtered.map((a) => (
             <AssignmentCard key={a.id} {...a} />
           ))}
           {filtered.length === 0 && (
-            <div className="col-span-2 text-center py-16 text-gray-400 font-medium">
+            <div className="col-span-1 md:col-span-2 text-center py-16 text-gray-400 font-medium">
               No assignments found.
             </div>
           )}
@@ -209,16 +219,16 @@ export default function AssignmentsPage() {
       </main>
 
       {/* Fade mask for bottom area */}
-      <div className="fixed bottom-0 left-[260px] right-0 h-40 bg-gradient-to-t from-[#f5f6f8] via-[#f5f6f8]/90 to-transparent pointer-events-none z-20"></div>
+      <div className="hidden md:block fixed bottom-0 left-[260px] right-0 h-40 bg-gradient-to-t from-[#f5f6f8] via-[#f5f6f8]/90 to-transparent pointer-events-none z-20"></div>
 
       {/* Floating CTA */}
-      <div className="fixed bottom-10 left-[calc(50%+130px)] -translate-x-1/2 z-30">
+      <div className="fixed bottom-24 right-5 md:bottom-10 md:left-[calc(50%+130px)] md:-translate-x-1/2 md:right-auto z-30">
         <Link
           href="/create"
-          className="flex items-center gap-2.5 bg-[#1c1c1c] text-white rounded-[24px] px-7 py-4 text-sidebar-item shadow-[0_12px_24px_rgba(0,0,0,0.15)] hover:bg-black transition-all hover:-translate-y-1"
+          className="flex items-center justify-center gap-2.5 md:bg-[#1c1c1c] bg-white md:text-white text-[#ff5722] md:rounded-[24px] rounded-full w-14 h-14 md:w-auto md:h-auto md:px-7 md:py-4 text-sidebar-item shadow-[0_8px_30px_rgba(0,0,0,0.12)] md:shadow-[0_12px_24px_rgba(0,0,0,0.15)] md:hover:bg-black transition-all hover:-translate-y-1"
         >
-          <Plus size={20} className="text-white" />
-          Create Assignment
+          <Plus size={24} className="md:text-white stroke-[2.5px] md:stroke-2" />
+          <span className="hidden md:inline">Create Assignment</span>
         </Link>
       </div>
     </>

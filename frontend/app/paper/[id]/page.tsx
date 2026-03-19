@@ -42,44 +42,47 @@ export default function PaperPage({ params }: { params: Promise<{ id: string }> 
         icon={<Sparkles size={16} strokeWidth={2.5} />}
       />
 
-      <div className="flex-1 overflow-y-auto px-1 py-4 relative">
-        <div className="bg-[#464646] rounded-[36px] min-h-full flex flex-col shadow-sm mx-1">
+      <div className="flex-1 overflow-y-auto px-0 md:px-1 py-0 md:py-4 relative">
+        <div className="bg-[#464646] rounded-none md:rounded-[36px] min-h-full flex flex-col shadow-sm mx-0 md:mx-1">
           {/* AI Banner Text */}
-          <div className="px-10 py-8 pb-6 flex flex-col items-start gap-4">
+          <div className="px-5 py-6 md:px-10 md:py-8 md:pb-6 flex flex-col items-start gap-4">
             <p className="text-sidebar-item leading-relaxed text-white">
               Certainly, Lakshya! Here are customized{" "}
               <span className="font-extrabold">Question Paper</span> for your{" "}
               <span className="font-extrabold">{paper.subject || "CBSE Grade 8 Science"}</span>{" "}
               classes on the <span className="font-extrabold">NCERT</span> chapters:
             </p>
-            <button
-              onClick={() => window.print()}
-              className="flex items-center gap-2.5 bg-white text-gray-900 text-normal font-extrabold px-6 py-2.5 rounded-[20px] transition-colors"
-            >
-              <Download size={16} strokeWidth={2.5} />
-              Download as PDF
-            </button>
-            <button
-              onClick={handleRegenerate}
-              className="flex items-center gap-2.5 bg-white/10 text-white text-normal font-extrabold px-6 py-2.5 rounded-[20px] hover:bg-white/20 transition-colors"
-            >
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => window.print()}
+                className="flex items-center gap-2.5 bg-white text-gray-900 text-[14px] md:text-normal font-extrabold px-5 md:px-6 py-2.5 md:py-2.5 rounded-[20px] transition-colors shadow-sm"
+              >
+                <Download size={16} strokeWidth={2.5} className="hidden md:block"/>
+                <Download size={14} strokeWidth={2.5} className="md:hidden block"/>
+                Download <span className="hidden md:inline">as PDF</span>
+              </button>
+              <button
+                onClick={handleRegenerate}
+                className="flex items-center gap-2.5 bg-white/10 text-white text-[14px] md:text-normal font-extrabold px-5 md:px-6 py-2.5 md:py-2.5 rounded-[20px] hover:bg-white/20 transition-colors"
+               >
               <Sparkles size={16} strokeWidth={2.5} />
               Regenerate
             </button>
+            </div>
           </div>
 
           {/* Paper Content Wrapper */}
-          <div className="flex-1 bg-white rounded-[32px] mx-3 mb-3 p-12 shadow-[0_4px_24px_rgba(0,0,0,0.05)]">
-            <div className="max-w-4xl mx-auto px-4 print:px-0">
+          <div className="flex-1 bg-white rounded-t-[32px] md:rounded-[32px] mx-0 md:mx-3 mb-0 md:mb-3 p-5 md:p-12 shadow-[0_-4px_24px_rgba(0,0,0,0.05)] md:shadow-[0_4px_24px_rgba(0,0,0,0.05)] pb-32 md:pb-12">
+            <div className="max-w-4xl mx-auto px-1 md:px-4 print:px-0">
               {/* Header */}
-              <div className="text-center mb-10 border-gray-200 pb-2">
-                <h1 className="text-heading text-[25px] font-extrabold text-gray-900 mb-2 tracking-tight">
+              <div className="text-center mb-8 md:mb-10 border-gray-200 pb-2">
+                <h1 className="text-[17px] md:text-heading md:text-[25px] font-extrabold text-gray-900 mb-2 tracking-tight">
                   Delhi Public School, Sector-4, Bokaro
                 </h1>
-                <p className="text-[20px] font-bold text-gray-800 tracking-tight leading-snug">
+                <p className="text-[15px] md:text-[20px] font-bold text-gray-800 tracking-tight leading-snug">
                   Subject: {paper.subject}
                 </p>
-                <p className="text-[19px] font-bold text-gray-800 tracking-tight">
+                <p className="text-[14px] md:text-[19px] font-bold text-gray-800 tracking-tight">
                   Class: {paper.className}
                 </p>
               </div>
