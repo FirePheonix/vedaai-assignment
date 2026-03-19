@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f5f6f8;
+  --foreground: #171717;
+}
+
+/* Base Typographic System */
+.text-normal {
+  font-family: "Bricolage Grotesque", sans-serif !important;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: -0.04em;
+}
+
+.text-heading {
+  font-family: "Bricolage Grotesque", sans-serif !important;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.04em;
+}
+
+.text-sidebar-item {
+  font-family: "Bricolage Grotesque", sans-serif !important;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: -0.04em;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: "Bricolage Grotesque", sans-serif !important;
+  letter-spacing: -0.04em;
+}
