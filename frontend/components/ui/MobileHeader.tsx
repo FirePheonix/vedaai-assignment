@@ -16,7 +16,7 @@ export default function MobileHeader() {
           <span className="absolute top-0 right-0 w-2 h-2 bg-orange-500 rounded-full border-2 border-white translate-x-1/2 -translate-y-1/2"></span>
         </button>
         <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden shadow-sm border border-gray-100/50">
-          <Image src="https://i.pravatar.cc/150?u=a042581f4e29026024d" alt="User" width={32} height={32} className="w-full h-full object-cover" />
+          <Image src="https://i.pravatar.cc/150?u=a042581f4e29026024d" alt="User" width={32} height={32} unoptimized className="w-full h-full object-cover" />
         </div>
         <button className="text-gray-600 hover:text-gray-900 transition-colors">
           <Menu size={24} strokeWidth={2.5} />

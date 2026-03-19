@@ -48,6 +48,7 @@ export default function Header({
             alt="John Doe"
             width={40}
             height={40}
+            unoptimized
             className="w-10 h-10 rounded-full border border-gray-100 bg-[#fddfae] object-cover"
           />
           <span className="text-normal font-bold text-gray-900">
