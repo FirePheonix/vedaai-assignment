@@ -14,6 +14,7 @@ import {
   BarChart2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useUser, UserButton } from "@clerk/nextjs"
 
 const navItems = [
   { label: "Home", href: "/home", icon: LayoutGrid },
@@ -25,6 +26,7 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname()
+  const { user } = useUser()
 
   return (
     <aside className="w-[260px] h-full bg-white rounded-[32px] block flex flex-col py-8 px-6 shrink-0 shadow-sm border border-gray-100/30">
@@ -100,15 +102,13 @@ export default function Sidebar() {
 
         {/* Teacher profile card */}
         <div className="flex items-center p-3 mt-1 bg-[#f4f4f6] rounded-2xl gap-3 shadow-inner">
-          <div className="w-10.5 h-10.5 rounded-full bg-[#fddfae] flex items-center justify-center shrink-0 overflow-hidden border-2 border-white shadow-sm">
-            <span className="text-[22px] leading-none">🐵</span>
-          </div>
+          <UserButton />
           <div className="min-w-0 pr-2">
             <p className="text-normal font-bold text-gray-900 truncate leading-tight">
-              Delhi Public School
+              {user?.fullName ?? user?.primaryEmailAddress?.emailAddress ?? "Teacher"}
             </p>
             <p className="text-normal text-[11.5px] text-gray-500 truncate mt-0.75">
-              Bokaro Steel City
+              {user?.primaryEmailAddress?.emailAddress ?? ""}
             </p>
           </div>
         </div>

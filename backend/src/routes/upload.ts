@@ -2,8 +2,10 @@ import express from "express"
 import multer from "multer"
 import pdfParse from "pdf-parse"
 import OpenAI from "openai"
+import { verifyToken } from "@clerk/backend"
 import { logger } from "@/lib/logger"
 import { storeChunks } from "@/lib/embed"
+import { env } from "@/env"
 
 const router = express.Router()
 const openai = new OpenAI()
@@ -57,6 +59,18 @@ async function extractText(file: Express.Multer.File): Promise<string> {
 }
 
 router.post("/", upload.single("file"), async (req, res) => {
+  const authHeader = req.headers.authorization
+  if (!authHeader?.startsWith("Bearer ")) {
+    res.status(401).json({ error: "Unauthorized" })
+    return
+  }
+  try {
+    await verifyToken(authHeader.slice(7), { secretKey: env.CLERK_SECRET_KEY })
+  } catch {
+    res.status(401).json({ error: "Invalid token" })
+    return
+  }
+
   if (!req.file) {
     res.status(400).json({ error: "No file or unsupported type. Send a PDF, image, or plain-text file." })
     return

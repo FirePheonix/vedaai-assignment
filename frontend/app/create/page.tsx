@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { useForm, useFieldArray, Controller, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Plus, X, Minus, Mic, CalendarDays, UploadCloud, CheckCircle, Loader2, AlertCircle } from "lucide-react"
+import { useAuth } from "@clerk/nextjs"
 import Header from "@/components/ui/Header"
 import { AssignmentFormSchema, type AssignmentFormData } from "@/lib/schemas"
 import { useAssignmentStore } from "@/store/assignmentStore"
@@ -36,6 +37,7 @@ interface UploadedSource {
 
 export default function CreateAssignmentPage() {
   const router = useRouter()
+  const { getToken } = useAuth()
   const { setFormData, setAssignmentId, setJobId, setJobStatus } = useAssignmentStore()
   const [dragActive, setDragActive] = useState(false)
   const [sources, setSources] = useState<UploadedSource[]>([])
@@ -76,9 +78,14 @@ export default function CreateAssignmentPage() {
     setSources((prev) => [...prev, { id, file, filename: file.name, status: "uploading" }])
 
     try {
+      const token = await getToken()
       const form = new FormData()
       form.append("file", file)
-      const res = await fetch(`${API_URL}/upload`, { method: "POST", body: form })
+      const res = await fetch(`${API_URL}/upload`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: form,
+      })
       if (res.ok) {
         const json = (await res.json()) as { sourceId: string; chunksStored: number; charCount: number }
         setSources((prev) =>
@@ -94,7 +101,7 @@ export default function CreateAssignmentPage() {
     } catch {
       setSources((prev) => prev.map((s) => (s.id === id ? { ...s, status: "error" } : s)))
     }
-  }, [])
+  }, [getToken])
 
   const addFiles = useCallback(
     (files: FileList | File[]) => {

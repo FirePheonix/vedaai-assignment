@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { router, publicProcedure, TRPCError } from "../trpc"
+import { router, protectedProcedure, TRPCError } from "../trpc"
 import { Assignment } from "../models/Assignment"
 import { assignmentQueue } from "../lib/queue"
 import { logger } from "../lib/logger"
@@ -20,8 +20,9 @@ const CreateAssignmentInput = z.object({
 })
 
 export const assignmentRouter = router({
-  create: publicProcedure.input(CreateAssignmentInput).mutation(async ({ input }) => {
+  create: protectedProcedure.input(CreateAssignmentInput).mutation(async ({ input, ctx }) => {
     const assignment = await Assignment.create({
+      userId: ctx.userId,
       title: input.title,
       subject: input.subject,
       dueDate: new Date(input.dueDate),
@@ -38,8 +39,10 @@ export const assignmentRouter = router({
     }
   }),
 
-  list: publicProcedure.query(async () => {
-    const assignments = await Assignment.find().sort({ createdAt: -1 }).select("-fileText").lean()
+  list: protectedProcedure.query(async ({ ctx }) => {
+    const assignments = await Assignment.find({ userId: ctx.userId })
+      .sort({ createdAt: -1 })
+      .lean()
 
     return assignments.map((a) => ({
       id: a._id.toString(),
@@ -52,10 +55,10 @@ export const assignmentRouter = router({
     }))
   }),
 
-  generate: publicProcedure
+  generate: protectedProcedure
     .input(z.object({ id: z.string(), className: z.string().min(1) }))
-    .mutation(async ({ input }) => {
-      const assignment = await Assignment.findById(input.id)
+    .mutation(async ({ input, ctx }) => {
+      const assignment = await Assignment.findOne({ _id: input.id, userId: ctx.userId })
 
       if (!assignment) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Assignment not found" })
@@ -82,8 +85,8 @@ export const assignmentRouter = router({
       return { jobId: job.id }
     }),
 
-  getById: publicProcedure.input(z.object({ id: z.string() })).query(async ({ input }) => {
-    const assignment = await Assignment.findById(input.id).lean()
+  getById: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ input, ctx }) => {
+    const assignment = await Assignment.findOne({ _id: input.id, userId: ctx.userId }).lean()
 
     if (!assignment) {
       throw new TRPCError({ code: "NOT_FOUND", message: "Assignment not found" })

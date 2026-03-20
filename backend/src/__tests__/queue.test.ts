@@ -12,7 +12,7 @@ vi.mock("@/lib/queue", () => ({
 }))
 
 const createCaller = createCallerFactory(appRouter)
-const caller = createCaller({ req: {} as Request, res: {} as Response })
+const caller = createCaller({ req: {} as Request, res: {} as Response, userId: "test_user" })
 
 const baseInput = {
   title: "Biology Test",

@@ -5,7 +5,7 @@ import { appRouter } from "@/routers/_app"
 import { setupDB, teardownDB, clearDB } from "@/__tests__/helpers"
 
 const createCaller = createCallerFactory(appRouter)
-const caller = createCaller({ req: {} as Request, res: {} as Response })
+const caller = createCaller({ req: {} as Request, res: {} as Response, userId: "test_user" })
 
 const validInput = {
   title: "Physics Test",

@@ -51,11 +51,12 @@ afterEach(clearDB)
 
 async function createAssignment() {
   return Assignment.create({
+    userId: "test_user",
     title: "Biology Test",
     subject: "Biology",
     dueDate: new Date(Date.now() + 86400000),
     questionTypes: [{ type: "MCQ", count: 2, marks: 5 }],
-      sourceIds: [],
+    sourceIds: [],
     status: "pending",
   })
 }

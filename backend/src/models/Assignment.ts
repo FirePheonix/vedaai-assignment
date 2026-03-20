@@ -7,6 +7,7 @@ export interface IQuestionType {
 }
 
 export interface IAssignment extends Document {
+  userId: string
   title: string
   subject: string
   dueDate: Date
@@ -29,6 +30,7 @@ const QuestionTypeSchema = new Schema<IQuestionType>({
 
 const AssignmentSchema = new Schema<IAssignment>(
   {
+    userId: { type: String, required: true, index: true },
     title: { type: String, required: true, trim: true },
     subject: { type: String, required: true, trim: true },
     dueDate: { type: Date, required: true },

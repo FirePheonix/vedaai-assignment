@@ -1,9 +1,9 @@
 import { z } from "zod"
-import { router, publicProcedure, TRPCError } from "../trpc"
+import { router, protectedProcedure, TRPCError } from "../trpc"
 import { QuestionPaper } from "../models/QuestionPaper"
 
 export const paperRouter = router({
-  getById: publicProcedure.input(z.object({ id: z.string() })).query(async ({ input }) => {
+  getById: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ input }) => {
     const paper = await QuestionPaper.findById(input.id).lean()
 
     if (!paper) {
@@ -25,7 +25,7 @@ export const paperRouter = router({
     }
   }),
 
-  getByAssignmentId: publicProcedure
+  getByAssignmentId: protectedProcedure
     .input(z.object({ assignmentId: z.string() }))
     .query(async ({ input }) => {
       const paper = await QuestionPaper.findOne({ assignmentId: input.assignmentId }).lean()

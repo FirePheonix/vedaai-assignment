@@ -7,7 +7,7 @@ import { Assignment } from "@/models/Assignment"
 import { setupDB, teardownDB, clearDB } from "@/__tests__/helpers"
 
 const createCaller = createCallerFactory(appRouter)
-const caller = createCaller({ req: {} as Request, res: {} as Response })
+const caller = createCaller({ req: {} as Request, res: {} as Response, userId: "test_user" })
 
 beforeAll(setupDB)
 afterAll(teardownDB)
@@ -15,6 +15,7 @@ afterEach(clearDB)
 
 async function createMockPaper() {
   const assignment = await Assignment.create({
+    userId: "test_user",
     title: "Science Test",
     subject: "Science",
     dueDate: new Date(Date.now() + 86400000),
