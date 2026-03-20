@@ -78,12 +78,28 @@ setValue,
 
   const onSubmit = async (data: AssignmentFormData) => {
     setFormData(data)
+
+    let fileText: string | undefined
+    if (data.file) {
+      const form = new FormData()
+      form.append("file", data.file)
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"}/upload`,
+        { method: "POST", body: form }
+      )
+      if (res.ok) {
+        const json = (await res.json()) as { fileText?: string }
+        fileText = json.fileText
+      }
+    }
+
     const { assignmentId } = await createMutation.mutateAsync({
       title: data.title,
       subject: data.subject,
       dueDate: new Date(data.dueDate).toISOString(),
       questionTypes: data.questionTypes.map(({ type, count, marks }) => ({ type, count, marks })),
       additionalInfo: data.additionalInfo,
+      fileText,
     })
     setAssignmentId(assignmentId)
     const { jobId } = await generateMutation.mutateAsync({ id: assignmentId, className: data.className })
@@ -209,7 +225,7 @@ setValue,
                   <p className="text-normal text-gray-900 font-extrabold mb-1">
                     Choose a file or drag & drop it here
                   </p>
-                  <p className="text-normal text-gray-400">JPEG, PNG, upto 10MB</p>
+                  <p className="text-normal text-gray-400">PDF or TXT, up to 10MB</p>
                   <button
                     type="button"
                     className="mt-6 px-6 py-2 bg-[#f4f5f7] rounded-full text-normal font-semibold text-gray-700 hover:bg-gray-200 transition-colors"

@@ -6,7 +6,7 @@ import { LayoutGrid, Users, BookOpen, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-  { label: "Home", href: "/", icon: LayoutGrid },
+  { label: "Home", href: "/home", icon: LayoutGrid },
   { label: "My Groups", href: "/groups", icon: Users },
   { label: "Library", href: "/library", icon: BookOpen },
   { label: "AI Toolkit", href: "/assignments", icon: Sparkles },

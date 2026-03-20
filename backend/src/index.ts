@@ -15,6 +15,7 @@ import { logger } from "./lib/logger"
 import { env } from "./env"
 import { assignmentQueue } from "./lib/queue"
 import { startWorker } from "./workers/generateWorker"
+import { uploadRouter } from "./routes/upload"
 
 const app = express()
 const httpServer = http.createServer(app)
@@ -40,6 +41,7 @@ createBullBoard({
   serverAdapter: bullBoardAdapter,
 })
 app.use("/admin/queues", bullBoardAdapter.getRouter())
+app.use("/upload", uploadRouter)
 
 app.use(
   "/trpc",

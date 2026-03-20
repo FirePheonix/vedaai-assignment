@@ -16,6 +16,7 @@ const CreateAssignmentInput = z.object({
   dueDate: z.string().datetime(),
   questionTypes: z.array(QuestionTypeInput).min(1),
   additionalInfo: z.string().max(500).optional(),
+  fileText: z.string().max(8000).optional(),
 })
 
 export const assignmentRouter = router({
@@ -26,6 +27,7 @@ export const assignmentRouter = router({
       dueDate: new Date(input.dueDate),
       questionTypes: input.questionTypes,
       additionalInfo: input.additionalInfo ?? "",
+      fileText: input.fileText ?? "",
       status: "pending",
     })
 
