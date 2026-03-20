@@ -4,12 +4,17 @@ import cors from "cors"
 import http from "http"
 import { Server as SocketIOServer } from "socket.io"
 import { createExpressMiddleware } from "@trpc/server/adapters/express"
+import { createBullBoard } from "@bull-board/api"
+import { BullMQAdapter } from "@bull-board/api/bullMQAdapter"
+import { ExpressAdapter } from "@bull-board/express"
 import { appRouter } from "./routers/_app"
 import { createContext } from "./trpc"
 import { connectDB } from "./lib/db"
 import { redis } from "./lib/redis"
 import { logger } from "./lib/logger"
 import { env } from "./env"
+import { assignmentQueue } from "./lib/queue"
+import { startWorker } from "./workers/generateWorker"
 
 const app = express()
 const httpServer = http.createServer(app)
@@ -27,6 +32,14 @@ app.use(express.json({ limit: "10mb" }))
 app.get("/health", (_req, res) => {
   res.json({ status: "ok", ts: new Date().toISOString() })
 })
+
+const bullBoardAdapter = new ExpressAdapter()
+bullBoardAdapter.setBasePath("/admin/queues")
+createBullBoard({
+  queues: [new BullMQAdapter(assignmentQueue)],
+  serverAdapter: bullBoardAdapter,
+})
+app.use("/admin/queues", bullBoardAdapter.getRouter())
 
 app.use(
   "/trpc",
@@ -55,9 +68,11 @@ io.on("connection", (socket) => {
 async function start() {
   await connectDB()
   await redis.connect()
+  startWorker(io)
 
   httpServer.listen(env.PORT, () => {
     logger.info({ port: env.PORT }, "Server running")
+    logger.info(`Bull Board: http://localhost:${env.PORT}/admin/queues`)
   })
 }
 

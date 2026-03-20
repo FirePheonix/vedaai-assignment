@@ -1,6 +1,7 @@
 import { z } from "zod"
 import { router, publicProcedure, TRPCError } from "../trpc"
 import { Assignment } from "../models/Assignment"
+import { assignmentQueue } from "../lib/queue"
 import { logger } from "../lib/logger"
 
 const QuestionTypeInput = z.object({
@@ -48,6 +49,36 @@ export const assignmentRouter = router({
       paperId: a.paperId?.toString() ?? null,
     }))
   }),
+
+  generate: publicProcedure
+    .input(z.object({ id: z.string(), className: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      const assignment = await Assignment.findById(input.id)
+
+      if (!assignment) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Assignment not found" })
+      }
+
+      if (assignment.status === "processing") {
+        throw new TRPCError({ code: "CONFLICT", message: "Already generating" })
+      }
+
+      const job = await assignmentQueue.add("assignment-generate" as string, {
+        assignmentId: assignment._id.toString(),
+        title: assignment.title,
+        subject: assignment.subject,
+        className: input.className,
+        questionTypes: assignment.questionTypes,
+        additionalInfo: assignment.additionalInfo,
+        fileText: assignment.fileText,
+      })
+
+      await Assignment.findByIdAndUpdate(input.id, { jobId: job.id })
+
+      logger.info({ assignmentId: input.id, jobId: job.id }, "Generation job queued")
+
+      return { jobId: job.id }
+    }),
 
   getById: publicProcedure.input(z.object({ id: z.string() })).query(async ({ input }) => {
     const assignment = await Assignment.findById(input.id).lean()
