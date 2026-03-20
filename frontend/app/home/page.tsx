@@ -1,231 +1,259 @@
 "use client"
 
-import Link from "next/link"
-import { FileText, CheckCircle2, Clock, Sparkles, Plus, ArrowRight, TrendingUp } from "lucide-react"
-import Header from "@/components/ui/Header"
-import { trpc } from "@/lib/trpc"
-import { useRouter } from "next/navigation"
-
-function StatCard({
-  label,
-  value,
-  icon: Icon,
-  accent,
-  sub,
-}: {
-  label: string
-  value: number | string
-  icon: React.ElementType
-  accent: string
-  sub?: string
-}) {
-  return (
-    <div className="bg-white rounded-[28px] p-6 border border-gray-100/30 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col gap-3">
-      <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${accent}`}>
-        <Icon size={18} strokeWidth={2.5} className="text-white" />
-      </div>
-      <div>
-        <p className="text-[32px] font-extrabold text-gray-900 leading-none tracking-tight">{value}</p>
-        {sub && <p className="text-normal text-orange-500 mt-1 font-semibold">{sub}</p>}
-        <p className="text-normal text-gray-400 mt-1">{label}</p>
-      </div>
-    </div>
-  )
-}
-
-function RecentRow({
-  title,
-  subject,
-  dueDate,
-  status,
-  paperId,
-}: {
-  title: string
-  subject: string
-  dueDate: string
-  status: string
-  paperId: string | null
-}) {
-  const router = useRouter()
-  const isDone = status === "done"
-
-  return (
-    <div
-      onClick={() => paperId && router.push(`/paper/${paperId}`)}
-      className={`flex items-center gap-4 py-4 px-1 border-b border-gray-100/60 last:border-0 ${isDone && paperId ? "cursor-pointer hover:bg-gray-50/50 -mx-1 px-2 rounded-xl transition-colors" : ""}`}
-    >
-      <div
-        className={`w-9 h-9 rounded-2xl flex items-center justify-center shrink-0 ${isDone ? "bg-emerald-50" : "bg-orange-50"}`}
-      >
-        {isDone ? (
-          <CheckCircle2 size={16} strokeWidth={2.5} className="text-emerald-500" />
-        ) : (
-          <Clock size={16} strokeWidth={2.5} className="text-orange-400" />
-        )}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-normal font-bold text-gray-900 truncate">{title}</p>
-        <p className="text-normal text-[12px] text-gray-400 truncate">{subject}</p>
-      </div>
-      <div className="text-right shrink-0">
-        <p className="text-normal text-[12px] text-gray-400">
-          Due {new Date(dueDate).toLocaleDateString("en-GB").replace(/\//g, "-")}
-        </p>
-        <p
-          className={`text-[11px] font-semibold mt-0.5 ${isDone ? "text-emerald-500" : "text-orange-400"}`}
-        >
-          {isDone ? "Generated" : status === "processing" ? "Processing…" : "Pending"}
-        </p>
-      </div>
-    </div>
-  )
-}
+import React from "react"
+import { Sparkles, MoreVertical, Plus, Users, ChevronRight, TrendingUp } from "lucide-react"
 
 export default function HomePage() {
-  const { data: assignments = [] } = trpc.assignment.list.useQuery()
-
-  const total = assignments.length
-  const done = assignments.filter((a) => a.status === "done").length
-  const pending = assignments.filter((a) => a.status !== "done").length
-
-  const now = new Date()
-  const weekEnd = new Date(now)
-  weekEnd.setDate(now.getDate() + 7)
-  const dueThisWeek = assignments.filter((a) => {
-    const d = new Date(a.dueDate)
-    return d >= now && d <= weekEnd
-  }).length
-
-  const recent = assignments.slice(0, 5)
-
   return (
-    <>
-      <Header breadcrumb="Home" showBack={false} />
+    <div className="flex flex-col h-full bg-[#f2f4f7] md:bg-transparent overflow-hidden px-4 md:px-0 py-4 md:pr-4 pb-24 md:pb-4 gap-6">
+      <div className="flex-1 overflow-y-auto w-full relative h-[calc(100vh-2rem)] flex flex-col gap-6">
+        
 
-      <main className="flex-1 overflow-y-auto px-5 md:px-8 py-4 md:py-7 h-[calc(100vh-70px)] md:h-full">
-        {/* Mobile title */}
-        <div className="md:hidden mb-6">
-          <p className="text-normal text-gray-400">Good morning,</p>
-          <h1 className="text-heading text-gray-900">Delhi Public School</h1>
-        </div>
+        <div className="flex flex-col xl:flex-row gap-5">
+          
 
-        {/* Desktop title */}
-        <div className="hidden md:block mb-7 ml-2">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-            <h1 className="text-heading text-gray-900 mt-1">Dashboard</h1>
-          </div>
-          <p className="text-normal text-gray-400 ml-4 mt-1.5">Here&apos;s a snapshot of your classroom activity.</p>
-        </div>
+          <div className="bg-white rounded-[32px] p-8 lg:p-10 flex flex-col justify-between shadow-[0_8px_30px_rgba(0,0,0,0.04)] lg:w-full xl:w-[57%] min-h-[380px] border border-gray-50/50">
+            
 
-        {/* Stats grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
-          <StatCard
-            label="Total Assignments"
-            value={total}
-            icon={FileText}
-            accent="bg-[#1c1c1c]"
-          />
-          <StatCard
-            label="Papers Generated"
-            value={done}
-            icon={CheckCircle2}
-            accent="bg-emerald-500"
-          />
-          <StatCard
-            label="In Progress"
-            value={pending}
-            icon={Clock}
-            accent="bg-orange-500"
-          />
-          <StatCard
-            label="Due This Week"
-            value={dueThisWeek}
-            icon={TrendingUp}
-            accent="bg-violet-500"
-            sub={dueThisWeek > 0 ? "Needs attention" : undefined}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5 pb-40 md:pb-10">
-          {/* Recent assignments */}
-          <div className="md:col-span-2 bg-white rounded-[28px] p-6 border border-gray-100/30 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sidebar-item font-extrabold text-gray-900">Recent Assignments</h2>
-              <Link
-                href="/assignments"
-                className="text-normal text-orange-500 hover:text-orange-600 flex items-center gap-1 font-semibold transition-colors"
-              >
-                View all <ArrowRight size={14} strokeWidth={2.5} />
-              </Link>
-            </div>
-
-            {recent.length === 0 ? (
-              <div className="py-10 text-center">
-                <p className="text-normal text-gray-400">No assignments yet.</p>
-                <Link
-                  href="/create"
-                  className="mt-3 inline-flex items-center gap-1.5 text-normal font-semibold text-orange-500 hover:text-orange-600 transition-colors"
-                >
-                  <Plus size={14} strokeWidth={2.5} /> Create one
-                </Link>
+            <div className="flex items-start justify-between mb-8">
+              <div className="flex flex-col">
+                <h1 className="text-[34px] font-extrabold text-[#111111] mb-2 tracking-tight">Hi Madhur!</h1>
+                <p className="text-[15px] font-medium text-[#9ca3af] max-w-[260px] leading-relaxed">
+                  Welcome back, John. Here&apos;s your teaching summary
+                </p>
               </div>
-            ) : (
-              recent.map((a) => (
-                <RecentRow
-                  key={a.id}
-                  title={a.title}
-                  subject={a.subject}
-                  dueDate={a.dueDate}
-                  status={a.status}
-                  paperId={a.paperId}
-                />
-              ))
-            )}
-          </div>
+              
+              <div className="relative w-[130px] h-[130px] flex items-center justify-center shrink-0">
 
-          {/* Quick actions */}
-          <div className="flex flex-col gap-4">
-            <div className="bg-white rounded-[28px] p-6 border border-gray-100/30 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
-              <h2 className="text-sidebar-item font-extrabold text-gray-900 mb-4">Quick Actions</h2>
-              <div className="flex flex-col gap-3">
-                <Link
-                  href="/create"
-                  className="flex items-center gap-3.5 px-4 py-3.5 bg-[#1c1c1c] text-white rounded-2xl text-normal font-semibold hover:bg-black transition-colors"
-                >
-                  <Sparkles size={16} fill="currentColor" />
-                  Create Assignment
-                </Link>
-                <Link
-                  href="/assignments"
-                  className="flex items-center gap-3.5 px-4 py-3.5 bg-gray-50 text-gray-700 rounded-2xl text-normal font-semibold hover:bg-gray-100 transition-colors border border-gray-100"
-                >
-                  <FileText size={16} strokeWidth={2.5} />
-                  View Assignments
-                </Link>
-                <Link
-                  href="/library"
-                  className="flex items-center gap-3.5 px-4 py-3.5 bg-gray-50 text-gray-700 rounded-2xl text-normal font-semibold hover:bg-gray-100 transition-colors border border-gray-100"
-                >
-                  <CheckCircle2 size={16} strokeWidth={2.5} />
-                  Generated Papers
-                </Link>
+                <div className="absolute inset-0 rounded-full bg-[#fef5f0] scale-[0.85] border border-[#fceee6]"></div>
+                
+
+                <div className="absolute top-4 right-2 w-3.5 h-3.5 rounded-full bg-[#fe5b2b] shadow-sm border-2 border-white"></div>
+                <div className="absolute bottom-6 -left-1 w-3 h-3 rounded-full bg-[#fe5b2b] shadow-sm border-2 border-white"></div>
+                <div className="absolute top-10 -right-2 w-2 h-2 rounded-full bg-[#fde1d3]"></div>
+                
+
+                <div className="w-[100px] h-[100px] rounded-full overflow-hidden bg-white z-10 flex items-center justify-center border-4 border-white shadow-md">
+                   <img src="https://api.dicebear.com/7.x/notionists/svg?seed=Jessica&backgroundColor=transparent" alt="Teacher Avatar" className="w-[140%] h-[140%] object-cover mt-4" />
+                </div>
               </div>
             </div>
 
-            {/* Tip card */}
-            <div className="bg-gradient-to-br from-orange-500 to-[#f47f42] rounded-[28px] p-6 text-white">
-              <Sparkles size={22} fill="white" className="mb-3" />
-              <p className="text-sidebar-item font-extrabold leading-snug mb-2">
-                Pro tip
-              </p>
-              <p className="text-normal text-white/80 leading-snug">
-                Upload a PDF or image of your syllabus to let VedaAI generate targeted questions automatically.
-              </p>
+            <div className="bg-[#f9fafb] border border-gray-200 rounded-[28px] p-6 flex items-center justify-between mt-auto shadow-sm">
+              <div className="flex flex-col pr-4">
+                <h2 className="text-[20px] font-extrabold text-[#111111] mb-2 tracking-tight">AI Teacher&apos;s Toolkit</h2>
+                <p className="text-[14px] font-medium text-[#7a818c] max-w-[340px] leading-relaxed">
+                  Quickly create lesson plans, question papers, and curriculum-aligned teaching materials.
+                </p>
+              </div>
+              <button className="bg-[#fe5b2b] text-white px-9 py-4 rounded-full font-bold text-[14.5px] shadow-[0_10px_30px_rgba(254,91,43,0.35)] hover:bg-[#eb4e1e] transition-colors shrink-0 ml-4">
+                Continue Now
+              </button>
+            </div>
+          </div>
+
+
+          <div className="flex flex-col lg:flex-row xl:w-[43%] gap-5 h-full">
+
+            <div className="bg-[#2a2a2a] rounded-[32px] p-8 flex flex-col items-center flex-1 shadow-[0_16px_40px_rgba(0,0,0,0.15)] shrink-0 min-h-[380px] justify-between border-0">
+              <h3 className="text-[15.5px] font-extrabold text-white/90 tracking-tight">Reviewed this week</h3>
+              
+              <div className="relative w-full max-w-[210px] aspect-[2/1] mt-10 flex flex-col items-center justify-end">
+                <svg className="absolute inset-0 w-full h-full overflow-visible" viewBox="0 0 100 50">
+                  <path d="M 5 50 A 45 45 0 0 1 95 50" fill="none" stroke="#333333" strokeWidth="18" strokeLinecap="round" />
+                  <path 
+                    d="M 5 50 A 45 45 0 0 1 95 50" 
+                    fill="none" 
+                    stroke="#fe5b2b" 
+                    strokeWidth="18" 
+                    strokeLinecap="round" 
+                    strokeDasharray="141.37" 
+                    strokeDashoffset={141.37 * (1 - 0.858)} 
+                  />
+                  {/* Ending Star UI at the tip of the Progress */}
+                  <g transform="translate(90.5, 30.5) rotate(25.6)">
+                     <path d="M0 -5 L1.2 -1.2 L5 0 L1.2 1.2 L0 5 L-1.2 1.2 L-5 0 L-1.2 -1.2 Z" fill="white" />
+                  </g>
+                </svg>
+                <div className="absolute w-full bottom-0 flex flex-col items-center justify-end translate-y-[6px]">
+                  <div className="text-[54px] font-extrabold leading-none tracking-tighter text-white flex items-baseline">
+                    103<span className="text-[21px] font-bold text-gray-400 ml-1">/ 120</span>
+                  </div>
+                  <div className="text-[13px] font-extrabold text-gray-400 mt-2 tracking-widest uppercase">Reviews</div>
+                </div>
+              </div>
+
+              <button className="mt-10 bg-white text-gray-900 font-extrabold px-6 py-4 rounded-full text-[14.5px] w-full hover:bg-gray-50 transition-colors shadow-lg">
+                Continue to classroom
+              </button>
+            </div>
+
+
+            <div className="flex flex-col gap-5 flex-1 min-w-[200px]">
+
+              <div className="bg-white rounded-[32px] p-6 flex flex-col items-center justify-center flex-1 shadow-[0_12px_44px_rgba(0,0,0,0.04)] min-h-[140px] border-0">
+                <span className="text-[44px] font-extrabold text-[#111111] leading-none tracking-tight mb-2">81</span>
+                <span className="text-[14px] font-[800] text-[#111111] text-center">Assignments Graded</span>
+              </div>
+              <div className="bg-[#303030] rounded-[32px] p-6 flex flex-col items-center justify-center flex-1 shadow-[0_16px_40px_rgba(42,42,42,0.2)] min-h-[140px] relative border-0">
+                <span className="text-[13px] font-medium text-white/90 text-center mb-1.5">Time Saved By AI</span>
+                <span className="text-[38px] font-extrabold text-white leading-none tracking-tight mb-2">6.7 hrs</span>
+                <div className="flex items-center gap-1 mt-1 text-[11px] font-medium text-gray-400 text-center">
+                  <span>1.5 hrs more than last week</span>
+                  <TrendingUp size={14} className="text-[#4ebf7b] shrink-0 ml-1" strokeWidth={3} />
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </main>
-    </>
+
+
+        <div className="flex items-center gap-4 mt-4">
+          <div className="flex items-center">
+            <div className="w-3.5 h-3.5 rounded-full bg-[#4ebf7b] mr-3 shadow-[0_0_12px_rgba(78,191,123,0.6)] border-2 border-[#dcf4e5] blur-[0.5px]"></div>
+            <h2 className="text-[21px] font-extrabold text-[#111111] tracking-tight">Recent Assignments</h2>
+          </div>
+          <button className="bg-[#1c1c1c] text-white pl-5 pr-4 py-2.5 rounded-full text-[13.5px] font-extrabold flex items-center transition-colors hover:bg-black shadow-[0_4px_16px_rgba(0,0,0,0.1)] h-11">
+            View All <ChevronRight size={16} strokeWidth={3} className="ml-1" />
+          </button>
+        </div>
+
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+          <div className="bg-white rounded-[28px] p-6 shadow-sm border border-gray-100/50 flex flex-col relative overflow-hidden group">
+             <div className="flex items-start justify-between">
+                <div className="flex items-center">
+                   <h3 className="text-[20px] font-extrabold text-gray-900 tracking-tight">Quiz on Electricity</h3>
+                   <span className="ml-3 px-3.5 py-1.5 rounded-full text-[11px] font-bold tracking-wide bg-[#dcf4e5] text-[#3ea468]">Active</span>
+                </div>
+                <button className="text-gray-500 hover:text-gray-900 transition-colors p-1">
+                   <MoreVertical size={20} />
+                </button>
+             </div>
+             <div className="flex items-center gap-1.5 text-[13px] font-semibold text-gray-400 mt-1.5 ml-0.5">
+                <Users size={14} className="mb-0.5" />
+                <span>Class 10-A</span>
+                <span className="mx-1">•</span>
+                <span>Science</span>
+             </div>
+             <div className="flex items-end justify-between mt-10 w-full px-1">
+                <div className="flex items-baseline gap-1.5">
+                   <span className="text-[34px] font-extrabold text-gray-900 leading-none tracking-tight">50/50</span>
+                   <span className="text-[13px] font-bold text-gray-400 mb-1">Submitted</span>
+                </div>
+                <div className="flex flex-col items-end gap-1.5 text-[12px] font-bold text-gray-400 pb-1">
+                   <p className="tracking-tight"><span className="text-gray-900">Assigned on : </span>20-06-2025</p>
+                   <p className="tracking-tight"><span className="text-gray-900">Due : </span>21-06-2025</p>
+                </div>
+             </div>
+             <div className="w-full h-1 bg-[#fe5b2b] rounded-full mt-4 opacity-90"></div>
+          </div>
+
+
+          <div className="bg-white rounded-[32px] p-7 shadow-[0_12px_44px_rgba(0,0,0,0.04)] border-0 flex flex-col relative overflow-hidden group">
+             <div className="flex items-start justify-between">
+                <div className="flex items-center">
+                   <h3 className="text-[20px] font-extrabold text-[#111111] tracking-tight">Quiz on Electricity</h3>
+                   <span className="ml-3 px-3.5 py-1.5 rounded-full text-[11px] font-[800] tracking-wide bg-[#f4f4f4] text-[#a0a0a0]">Closed</span>
+                </div>
+                <button className="text-gray-500 hover:text-gray-900 transition-colors pr-1">
+                   <MoreVertical size={20} />
+                </button>
+             </div>
+             <div className="flex items-center gap-1.5 text-[13px] font-semibold text-gray-400 mt-1 ml-0.5">
+                <Users size={14} className="mb-[1px]" />
+                <span>Class 10-A</span>
+                <span className="mx-1">•</span>
+                <span>Science</span>
+             </div>
+             <div className="flex items-end justify-between mt-10 w-full">
+                <div className="flex items-baseline gap-1.5 relative top-1.5">
+                   <span className="text-[36px] font-extrabold text-[#111111] leading-none tracking-tight">50/50</span>
+                   <span className="text-[13px] font-bold text-gray-400 mb-[4px]">Submitted</span>
+                </div>
+                <div className="flex flex-col items-end gap-1.5 text-[12px] font-[700] text-gray-400 pb-1">
+                   <p className="tracking-tight"><span className="text-[#111111]">Assigned on : </span>20-06-2025</p>
+                   <p className="tracking-tight"><span className="text-[#111111]">Due : </span>21-06-2025</p>
+                </div>
+             </div>
+             <div className="w-full h-1 bg-[#fe5b2b] rounded-full mt-4"></div>
+          </div>
+
+
+          <div className="bg-white rounded-[32px] p-7 shadow-[0_12px_44px_rgba(0,0,0,0.04)] border-0 flex flex-col relative overflow-hidden group">
+             <div className="flex items-start justify-between">
+                <div className="flex items-center">
+                   <h3 className="text-[20px] font-extrabold text-[#111111] tracking-tight">Quiz on Electricity</h3>
+                   <span className="ml-3 px-3.5 py-1.5 rounded-full text-[11px] font-[800] tracking-wide bg-[#dcf4e5] text-[#3ea468]">Active</span>
+                </div>
+                <button className="text-gray-500 hover:text-gray-900 transition-colors pr-1">
+                   <MoreVertical size={20} />
+                </button>
+             </div>
+             <div className="flex items-center gap-1.5 text-[13px] font-semibold text-gray-400 mt-1 ml-0.5">
+                <Users size={14} className="mb-[1px]" />
+                <span>Class 10-A</span>
+                <span className="mx-1">•</span>
+                <span>Science</span>
+             </div>
+             <div className="flex items-end justify-between mt-10 w-full">
+                <div className="flex items-baseline gap-1.5 relative top-1.5">
+                   <span className="text-[36px] font-extrabold text-[#111111] leading-none tracking-tight">50/50</span>
+                   <span className="text-[13px] font-bold text-gray-400 mb-[4px]">Submitted</span>
+                </div>
+                <div className="flex flex-col items-end gap-1.5 text-[12px] font-[700] text-gray-400 pb-1">
+                   <p className="tracking-tight"><span className="text-[#111111]">Assigned on : </span>20-06-2025</p>
+                   <p className="tracking-tight"><span className="text-[#111111]">Due : </span>21-06-2025</p>
+                </div>
+             </div>
+             <div className="w-full h-1 bg-[#fe5b2b] rounded-full mt-4"></div>
+          </div>
+
+
+          <div className="bg-white rounded-[28px] p-6 shadow-sm border border-gray-100/50 flex flex-col relative overflow-hidden group">
+             <div className="flex items-start justify-between">
+                <div className="flex items-center">
+                   <h3 className="text-[20px] font-extrabold text-gray-900 tracking-tight">Quiz on Electricity</h3>
+                   <span className="ml-3 px-3.5 py-1.5 rounded-full text-[11px] font-bold tracking-wide bg-[#f0f0f0] text-gray-500">Closed</span>
+                </div>
+                <button className="text-gray-500 hover:text-gray-900 transition-colors p-1">
+                   <MoreVertical size={20} />
+                </button>
+             </div>
+             <div className="flex items-center gap-1.5 text-[13px] font-semibold text-gray-400 mt-1.5 ml-0.5">
+                <Users size={14} className="mb-0.5" />
+                <span>Class 10-A</span>
+                <span className="mx-1">•</span>
+                <span>Science</span>
+             </div>
+             <div className="flex items-end justify-between mt-10 w-full px-1">
+                <div className="flex items-baseline gap-1.5">
+                   <span className="text-[34px] font-extrabold text-gray-900 leading-none tracking-tight">50/50</span>
+                   <span className="text-[13px] font-bold text-gray-400 mb-1">Submitted</span>
+                </div>
+                <div className="flex flex-col items-end gap-1.5 text-[12px] font-bold text-gray-400 pb-1">
+                   <p className="tracking-tight"><span className="text-gray-900">Assigned on : </span>20-06-2025</p>
+                   <p className="tracking-tight"><span className="text-gray-900">Due : </span>21-06-2025</p>
+                </div>
+             </div>
+             <div className="w-full h-1 bg-[#fe5b2b] rounded-full mt-4 opacity-70"></div>
+          </div>
+        </div>
+
+
+        <div className="bg-white rounded-[32px] p-6 flex flex-col md:flex-row items-center justify-between shadow-[0_12px_44px_rgba(0,0,0,0.04)] mt-1 w-full gap-4">
+          <div className="flex items-center gap-3 md:ml-2 text-center md:text-left">
+            <Sparkles size={20} strokeWidth={2.5} className="text-[#111111] shrink-0" />
+            <span className="text-[16px] font-extrabold text-[#111111]">Manage your assignments and track submissions</span>
+          </div>
+          <button className="bg-[#1c1c1c] w-full md:w-auto text-white px-7 py-3 rounded-full text-[14px] font-bold flex items-center justify-center transition-colors hover:bg-black shrink-0">
+            <Plus size={16} strokeWidth={3} className="mr-2" />
+            Create Assignment
+          </button>
+        </div>
+
+      </div>
+    </div>
   )
 }

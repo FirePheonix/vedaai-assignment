@@ -11,15 +11,16 @@ import {
   Settings,
   Sparkles,
   PieChart,
+  BarChart2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navItems = [
   { label: "Home", href: "/home", icon: LayoutGrid },
-  { label: "My Groups", href: "/groups", icon: Users },
-  { label: "Assignments", href: "/assignments", icon: FileText, badge: 10 },
-  { label: "AI Teacher's Toolkit", href: "/toolkit", icon: Smartphone },
-  { label: "My Library", href: "/library", icon: PieChart },
+  { label: "My Classes", href: "/classes", icon: Users },
+  { label: "Assignments", href: "/assignments", icon: FileText },
+  { label: "Analytics", href: "/analytics", icon: BarChart2 },
+  { label: "My Library", href: "/library", icon: PieChart, badge: 32 },
 ]
 
 export default function Sidebar() {
