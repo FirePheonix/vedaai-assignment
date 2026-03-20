@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc",
+    "build": "tsc && tsc-alias",
     "start": "node dist/index.js",
     "lint": "eslint src",
     "format": "prettier --write .",
@@ -46,6 +46,7 @@
     "ioredis-mock": "^8.13.1",
     "mongodb-memory-server": "^11.0.1",
     "prettier": "^3.8.1",
+    "tsc-alias": "^1.8.16",
     "tsx": "^4.15.6",
     "typescript": "^5.4.5",
     "vitest": "^4.1.0"
