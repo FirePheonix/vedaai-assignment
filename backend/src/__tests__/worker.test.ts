@@ -55,6 +55,7 @@ async function createAssignment() {
     subject: "Biology",
     dueDate: new Date(Date.now() + 86400000),
     questionTypes: [{ type: "MCQ", count: 2, marks: 5 }],
+      sourceIds: [],
     status: "pending",
   })
 }
@@ -76,6 +77,7 @@ describe("processGenerateJob", () => {
       subject: "Biology",
       className: "8th",
       questionTypes: [{ type: "MCQ", count: 2, marks: 5 }],
+      sourceIds: [],
     }
 
     await processGenerateJob(jobData, emit)
@@ -97,6 +99,7 @@ describe("processGenerateJob", () => {
       subject: "Biology",
       className: "8th",
       questionTypes: [{ type: "MCQ", count: 2, marks: 5 }],
+      sourceIds: [],
     }
 
     const result = await processGenerateJob(jobData, emit)
@@ -116,17 +119,18 @@ describe("processGenerateJob", () => {
       subject: "Biology",
       className: "8th",
       questionTypes: [{ type: "MCQ", count: 2, marks: 5 }],
+      sourceIds: [],
     }
 
     await processGenerateJob(jobData, emit)
 
     const steps = events.map((e) => e.event)
-    expect(steps).toEqual(["job:progress", "job:progress", "job:progress", "job:done"])
+    expect(steps).toEqual(["job:progress", "job:progress", "job:progress", "job:progress", "job:done"])
 
     const progressSteps = events
       .filter((e) => e.event === "job:progress")
       .map((e) => (e.payload as { step: string }).step)
-    expect(progressSteps).toEqual(["generating", "validating", "saving"])
+    expect(progressSteps).toEqual(["retrieving", "generating", "validating", "saving"])
   })
 
   it("throws if OpenAI returns empty content", async () => {
@@ -143,6 +147,7 @@ describe("processGenerateJob", () => {
           subject: "Biology",
           className: "8th",
           questionTypes: [{ type: "MCQ", count: 2, marks: 5 }],
+      sourceIds: [],
         },
         emit
       )
@@ -160,6 +165,7 @@ describe("processGenerateJob", () => {
         subject: "Biology",
         className: "8th",
         questionTypes: [{ type: "MCQ", count: 2, marks: 5 }],
+      sourceIds: [],
       },
       emit
     )

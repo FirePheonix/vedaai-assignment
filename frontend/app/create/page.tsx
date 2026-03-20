@@ -4,7 +4,7 @@ import { useState, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useForm, useFieldArray, Controller, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Plus, X, Minus, Mic, CalendarDays, UploadCloud } from "lucide-react"
+import { Plus, X, Minus, Mic, CalendarDays, UploadCloud, CheckCircle, Loader2, AlertCircle } from "lucide-react"
 import Header from "@/components/ui/Header"
 import { AssignmentFormSchema, type AssignmentFormData } from "@/lib/schemas"
 import { useAssignmentStore } from "@/store/assignmentStore"
@@ -22,10 +22,23 @@ const QUESTION_TYPE_OPTIONS = [
   "Match the Following",
 ]
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
+
+interface UploadedSource {
+  id: string
+  file: File
+  filename: string
+  sourceId?: string
+  chunksStored?: number
+  charCount?: number
+  status: "uploading" | "done" | "error"
+}
+
 export default function CreateAssignmentPage() {
   const router = useRouter()
   const { setFormData, setAssignmentId, setJobId, setJobStatus } = useAssignmentStore()
   const [dragActive, setDragActive] = useState(false)
+  const [sources, setSources] = useState<UploadedSource[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const createMutation = trpc.assignment.create.useMutation()
@@ -35,7 +48,6 @@ export default function CreateAssignmentPage() {
     register,
     control,
     handleSubmit,
-setValue,
     formState: { errors, isSubmitting },
   } = useForm<AssignmentFormData>({
     resolver: zodResolver(AssignmentFormSchema),
@@ -51,47 +63,59 @@ setValue,
         { id: "4", type: "Numerical Problems", count: 5, marks: 5 },
       ],
       additionalInfo: "",
-      file: null,
     },
   })
 
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "questionTypes",
-  })
-
+  const { fields, append, remove } = useFieldArray({ control, name: "questionTypes" })
   const watchedTypes = useWatch({ control, name: "questionTypes" })
-  const watchedFile = useWatch({ control, name: "file" })
-
   const totalQuestions = watchedTypes?.reduce((s, t) => s + (t.count || 0), 0) ?? 0
   const totalMarks = watchedTypes?.reduce((s, t) => s + (t.count || 0) * (t.marks || 0), 0) ?? 0
+
+  const uploadFile = useCallback(async (file: File) => {
+    const id = crypto.randomUUID()
+    setSources((prev) => [...prev, { id, file, filename: file.name, status: "uploading" }])
+
+    try {
+      const form = new FormData()
+      form.append("file", file)
+      const res = await fetch(`${API_URL}/upload`, { method: "POST", body: form })
+      if (res.ok) {
+        const json = (await res.json()) as { sourceId: string; chunksStored: number; charCount: number }
+        setSources((prev) =>
+          prev.map((s) =>
+            s.id === id
+              ? { ...s, sourceId: json.sourceId, chunksStored: json.chunksStored, charCount: json.charCount, status: "done" }
+              : s
+          )
+        )
+      } else {
+        setSources((prev) => prev.map((s) => (s.id === id ? { ...s, status: "error" } : s)))
+      }
+    } catch {
+      setSources((prev) => prev.map((s) => (s.id === id ? { ...s, status: "error" } : s)))
+    }
+  }, [])
+
+  const addFiles = useCallback(
+    (files: FileList | File[]) => {
+      Array.from(files).forEach((f) => uploadFile(f))
+    },
+    [uploadFile]
+  )
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault()
       setDragActive(false)
-      const file = e.dataTransfer.files[0]
-      if (file) setValue("file", file)
+      if (e.dataTransfer.files.length) addFiles(e.dataTransfer.files)
     },
-    [setValue]
+    [addFiles]
   )
 
   const onSubmit = async (data: AssignmentFormData) => {
     setFormData(data)
 
-    let fileText: string | undefined
-    if (data.file) {
-      const form = new FormData()
-      form.append("file", data.file)
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"}/upload`,
-        { method: "POST", body: form }
-      )
-      if (res.ok) {
-        const json = (await res.json()) as { fileText?: string }
-        fileText = json.fileText
-      }
-    }
+    const sourceIds = sources.filter((s) => s.status === "done" && s.sourceId).map((s) => s.sourceId!)
 
     const { assignmentId } = await createMutation.mutateAsync({
       title: data.title,
@@ -99,7 +123,7 @@ setValue,
       dueDate: new Date(data.dueDate).toISOString(),
       questionTypes: data.questionTypes.map(({ type, count, marks }) => ({ type, count, marks })),
       additionalInfo: data.additionalInfo,
-      fileText,
+      sourceIds,
     })
     setAssignmentId(assignmentId)
     const { jobId } = await generateMutation.mutateAsync({ id: assignmentId, className: data.className })
@@ -124,7 +148,7 @@ setValue,
           </p>
         </div>
 
-        {/* Mobile Page Header equivalent */}
+        {/* Mobile Page Header */}
         <div className="md:hidden flex flex-col items-center justify-center relative mb-6">
           <div className="flex items-center w-full justify-center relative mb-5">
             <button type="button" onClick={() => router.back()} className="absolute left-0 w-10 h-10 bg-gray-200/50 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors">
@@ -149,7 +173,6 @@ setValue,
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="w-full md:w-[850px] mx-auto pb-32">
-          {/* Assignment Details card */}
           <div className="bg-[#eaecee] md:bg-[#f2f4f6] rounded-[32px] p-6 lg:p-10 mb-4 shadow-sm md:shadow-[0_2px_20px_rgba(0,0,0,0.02)] border border-white/50 md:border-transparent">
             <h2 className="text-[18px] md:text-[20px] font-extrabold text-gray-900 mb-1 tracking-tight">
               Assignment Details
@@ -191,69 +214,69 @@ setValue,
 
             {/* File upload */}
             <div
-              onDragOver={(e) => {
-                e.preventDefault()
-                setDragActive(true)
-              }}
+              onDragOver={(e) => { e.preventDefault(); setDragActive(true) }}
               onDragLeave={() => setDragActive(false)}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
               className={cn(
                 "border-2 border-dashed rounded-[24px] p-10 flex flex-col items-center justify-center cursor-pointer transition-colors mb-2 bg-white",
-                dragActive
-                  ? "border-orange-400 bg-orange-50"
-                  : "border-gray-200 hover:border-gray-300"
+                dragActive ? "border-orange-400 bg-orange-50" : "border-gray-200 hover:border-gray-300"
               )}
             >
               <UploadCloud size={32} className="text-[#1c1c1c] mb-3" strokeWidth={1.5} />
-              {watchedFile ? (
-                <div className="flex items-center gap-2 text-normal text-gray-700">
-                  <span className="font-medium">{(watchedFile as File).name}</span>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setValue("file", null)
-                    }}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <p className="text-normal text-gray-900 font-extrabold mb-1">
-                    Choose a file or drag & drop it here
-                  </p>
-                  <p className="text-normal text-gray-400">PDF or TXT, up to 10MB</p>
-                  <button
-                    type="button"
-                    className="mt-6 px-6 py-2 bg-[#f4f5f7] rounded-full text-normal font-semibold text-gray-700 hover:bg-gray-200 transition-colors"
-                  >
-                    Browse Files
-                  </button>
-                </>
-              )}
+              <p className="text-normal text-gray-900 font-extrabold mb-1">
+                Choose files or drag & drop
+              </p>
+              <p className="text-normal text-gray-400">PDF, image, or TXT — up to 10MB each</p>
+              <button
+                type="button"
+                className="mt-6 px-6 py-2 bg-[#f4f5f7] rounded-full text-normal font-semibold text-gray-700 hover:bg-gray-200 transition-colors"
+              >
+                Browse Files
+              </button>
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".pdf,.txt,.png,.jpg,.jpeg"
+                accept=".pdf,.txt,.png,.jpg,.jpeg,.webp"
+                multiple
                 className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0]
-                  if (file) setValue("file", file)
-                }}
+                onChange={(e) => { if (e.target.files?.length) addFiles(e.target.files) }}
               />
             </div>
+
+            {/* Uploaded sources list */}
+            {sources.length > 0 && (
+              <div className="flex flex-col gap-2 mb-6">
+                {sources.map((src) => (
+                  <div key={src.id} className="flex items-center gap-3 bg-white rounded-2xl px-4 py-3 border border-gray-100">
+                    {src.status === "uploading" && <Loader2 size={16} className="text-orange-400 animate-spin shrink-0" />}
+                    {src.status === "done" && <CheckCircle size={16} className="text-emerald-500 shrink-0" />}
+                    {src.status === "error" && <AlertCircle size={16} className="text-red-400 shrink-0" />}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-normal font-semibold text-gray-800 truncate">{src.filename}</p>
+                      {src.status === "uploading" && <p className="text-xs text-gray-400">Embedding into knowledge base...</p>}
+                      {src.status === "done" && <p className="text-xs text-emerald-600">{src.chunksStored} chunks · {src.charCount?.toLocaleString()} chars</p>}
+                      {src.status === "error" && <p className="text-xs text-red-400">Upload failed — try again</p>}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSources((prev) => prev.filter((s) => s.id !== src.id))}
+                      className="text-gray-300 hover:text-gray-500 shrink-0"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <p className="text-normal text-gray-500 text-center mb-10">
-              Upload images of your preferred document/image
+              Upload your textbooks, notes, or syllabus — AI will generate questions from them
             </p>
 
-            {/* Due Date (Mocked to match image design) */}
+            {/* Due Date */}
             <div className="mb-8">
-              <label className="block text-normal font-extrabold text-gray-900 mb-3">
-                Due Date
-              </label>
+              <label className="block text-normal font-extrabold text-gray-900 mb-3">Due Date</label>
               <div className="relative">
                 <input
                   type="date"
@@ -263,15 +286,9 @@ setValue,
                     errors.dueDate && "border-red-400"
                   )}
                 />
-                <CalendarDays
-                  size={18}
-                  strokeWidth={2}
-                  className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-900 pointer-events-none"
-                />
+                <CalendarDays size={18} strokeWidth={2} className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-900 pointer-events-none" />
               </div>
-              {errors.dueDate && (
-                <p className="text-red-500 text-xs mt-1">{errors.dueDate.message}</p>
-              )}
+              {errors.dueDate && <p className="text-red-500 text-xs mt-1">{errors.dueDate.message}</p>}
             </div>
 
             {/* Question Types */}
@@ -289,7 +306,6 @@ setValue,
                     key={field.id}
                     className="grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-y-2 md:gap-y-0 md:gap-x-12 items-center bg-white md:bg-transparent p-4 md:p-0 rounded-[24px] md:rounded-none relative"
                   >
-                    {/* Header line on mobile = Type + Close icon */}
                     <div className="flex items-center gap-3 w-full md:w-auto">
                       <div className="flex-1 relative">
                         <Controller
@@ -301,28 +317,14 @@ setValue,
                               className="w-full bg-transparent md:bg-white border md:border-gray-100/50 border-transparent rounded-full md:px-6 md:py-3.5 text-[13px] md:text-normal font-bold md:font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-200 shadow-none md:shadow-sm appearance-none"
                             >
                               {QUESTION_TYPE_OPTIONS.map((opt) => (
-                                <option key={opt} value={opt}>
-                                  {opt}
-                                </option>
+                                <option key={opt} value={opt}>{opt}</option>
                               ))}
                             </select>
                           )}
                         />
                         <div className="absolute right-2 md:right-5 top-1/2 -translate-y-1/2 pointer-events-none hidden md:block">
-                          <svg
-                            width="12"
-                            height="8"
-                            viewBox="0 0 12 8"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path
-                              d="M1.5 1.5L6 6L10.5 1.5"
-                              stroke="#171717"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
+                          <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1.5 1.5L6 6L10.5 1.5" stroke="#171717" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                         </div>
                         <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none md:hidden block">
@@ -341,9 +343,7 @@ setValue,
                       </button>
                     </div>
 
-                    {/* Mobile Stepper Wrapper */}
                     <div className="flex flex-row md:contents bg-[#eeeff1] md:bg-transparent rounded-[24px] p-2 mt-2 md:mt-0 gap-2 items-center justify-between w-full">
-                      {/* Count stepper */}
                       <div className="flex flex-col md:block items-center justify-center w-full md:w-auto">
                         <span className="text-[11px] font-extrabold text-gray-800 md:hidden mb-2 pt-1">No. of Questions</span>
                         <Controller
@@ -351,21 +351,11 @@ setValue,
                           name={`questionTypes.${index}.count`}
                           render={({ field: f }) => (
                             <div className="flex items-center gap-1 md:gap-2 bg-white border border-transparent md:border-gray-100/50 rounded-full px-1.5 md:px-2 py-1 w-full md:w-36 justify-between shadow-[0_2px_12px_rgba(0,0,0,0.03)] md:shadow-sm">
-                              <button
-                                type="button"
-                                onClick={() => f.onChange(Math.max(1, f.value - 1))}
-                                className="text-gray-300 hover:text-gray-800 w-8 h-8 flex items-center justify-center"
-                              >
+                              <button type="button" onClick={() => f.onChange(Math.max(1, f.value - 1))} className="text-gray-300 hover:text-gray-800 w-8 h-8 flex items-center justify-center">
                                 <Minus size={16} strokeWidth={2.5} />
                               </button>
-                              <span className="text-normal font-extrabold text-gray-900 w-6 text-center">
-                                {f.value}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => f.onChange(Math.min(50, f.value + 1))}
-                                className="text-gray-300 hover:text-gray-800 w-8 h-8 flex items-center justify-center"
-                              >
+                              <span className="text-normal font-extrabold text-gray-900 w-6 text-center">{f.value}</span>
+                              <button type="button" onClick={() => f.onChange(Math.min(50, f.value + 1))} className="text-gray-300 hover:text-gray-800 w-8 h-8 flex items-center justify-center">
                                 <Plus size={16} strokeWidth={2.5} />
                               </button>
                             </div>
@@ -373,7 +363,6 @@ setValue,
                         />
                       </div>
 
-                      {/* Marks stepper */}
                       <div className="flex flex-col md:block items-center justify-center w-full md:w-auto">
                         <span className="text-[11px] font-extrabold text-gray-800 md:hidden mb-2 pt-1">Marks</span>
                         <Controller
@@ -381,21 +370,11 @@ setValue,
                           name={`questionTypes.${index}.marks`}
                           render={({ field: f }) => (
                             <div className="flex items-center gap-1 md:gap-2 bg-white border border-transparent md:border-gray-100/50 rounded-full px-1.5 md:px-2 py-1 w-full md:w-28 justify-between shadow-[0_2px_12px_rgba(0,0,0,0.03)] md:shadow-sm">
-                              <button
-                                type="button"
-                                onClick={() => f.onChange(Math.max(1, f.value - 1))}
-                                className="text-gray-300 hover:text-gray-800 w-8 h-8 flex items-center justify-center"
-                              >
+                              <button type="button" onClick={() => f.onChange(Math.max(1, f.value - 1))} className="text-gray-300 hover:text-gray-800 w-8 h-8 flex items-center justify-center">
                                 <Minus size={16} strokeWidth={2.5} />
                               </button>
-                              <span className="text-normal font-extrabold text-gray-900 w-4 text-center">
-                                {f.value}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => f.onChange(f.value + 1)}
-                                className="text-gray-300 hover:text-gray-800 w-8 h-8 flex items-center justify-center"
-                              >
+                              <span className="text-normal font-extrabold text-gray-900 w-4 text-center">{f.value}</span>
+                              <button type="button" onClick={() => f.onChange(f.value + 1)} className="text-gray-300 hover:text-gray-800 w-8 h-8 flex items-center justify-center">
                                 <Plus size={16} strokeWidth={2.5} />
                               </button>
                             </div>
@@ -409,23 +388,13 @@ setValue,
 
               {errors.questionTypes && (
                 <p className="text-red-500 text-xs mt-1">
-                  {typeof errors.questionTypes.message === "string"
-                    ? errors.questionTypes.message
-                    : "Fix question type errors"}
+                  {typeof errors.questionTypes.message === "string" ? errors.questionTypes.message : "Fix question type errors"}
                 </p>
               )}
 
-              {/* Add row */}
               <button
                 type="button"
-                onClick={() =>
-                  append({
-                    id: crypto.randomUUID(),
-                    type: QUESTION_TYPE_OPTIONS[0],
-                    count: 3,
-                    marks: 2,
-                  })
-                }
+                onClick={() => append({ id: crypto.randomUUID(), type: QUESTION_TYPE_OPTIONS[0], count: 3, marks: 2 })}
                 className="flex items-center gap-3 mt-6 text-normal text-gray-900 font-extrabold hover:text-gray-600 transition-colors"
               >
                 <span className="w-8 h-8 rounded-full bg-[#1c1c1c] flex items-center justify-center shrink-0">
@@ -434,22 +403,16 @@ setValue,
                 Add Question Type
               </button>
 
-              {/* Totals */}
               <div className="mt-8 text-right text-normal text-gray-900">
-                <p className="mb-2">
-                  Total Questions : <span className="font-extrabold">{totalQuestions}</span>
-                </p>
-                <p>
-                  Total Marks : <span className="font-extrabold">{totalMarks}</span>
-                </p>
+                <p className="mb-2">Total Questions : <span className="font-extrabold">{totalQuestions}</span></p>
+                <p>Total Marks : <span className="font-extrabold">{totalMarks}</span></p>
               </div>
             </div>
 
             {/* Additional info */}
             <div className="mt-10">
               <label className="block text-normal font-extrabold text-gray-900 mb-3">
-                Additional Information{" "}
-                <span className="font-medium text-gray-500">(For better output)</span>
+                Additional Information <span className="font-medium text-gray-500">(For better output)</span>
               </label>
               <div className="relative">
                 <textarea
@@ -458,23 +421,16 @@ setValue,
                   placeholder="e.g Generate a question paper for 3 hour exam duration..."
                   className="w-full bg-[#f4f5f7] border-2 border-dashed border-gray-200 rounded-[20px] px-6 py-5 text-normal focus:outline-none focus:ring-2 focus:ring-orange-200 resize-none text-gray-700 placeholder:text-gray-400"
                 />
-                <button
-                  type="button"
-                  className="absolute right-5 bottom-5 text-gray-500 hover:text-gray-800 bg-white shadow-sm border border-gray-100 p-2 rounded-full"
-                >
+                <button type="button" className="absolute right-5 bottom-5 text-gray-500 hover:text-gray-800 bg-white shadow-sm border border-gray-100 p-2 rounded-full">
                   <Mic size={18} strokeWidth={2} />
                 </button>
               </div>
-              {errors.additionalInfo && (
-                <p className="text-red-500 text-xs mt-1">{errors.additionalInfo.message}</p>
-              )}
+              {errors.additionalInfo && <p className="text-red-500 text-xs mt-1">{errors.additionalInfo.message}</p>}
             </div>
           </div>
 
-          {/* Navigation Overlay Container */}
           <div className="fixed bottom-0 left-0 md:left-[260px] right-0 h-40 bg-gradient-to-t from-[#f5f6f8] via-[#f5f6f8]/90 to-transparent pointer-events-none z-20"></div>
 
-          {/* Navigation floating logic */}
           <div className="fixed bottom-28 md:bottom-8 left-1/2 md:left-[calc(40%+130px)] -translate-x-1/2 flex items-center justify-center md:justify-between w-full md:w-[850px] z-30 px-6 max-w-[400px] md:max-w-none gap-4">
             <button
               type="button"
@@ -485,10 +441,10 @@ setValue,
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || sources.some((s) => s.status === "uploading")}
               className="flex items-center justify-center gap-2 w-full md:w-auto md:px-10 py-3.5 bg-[#1c1c1c] shadow-[0_8px_24px_rgba(0,0,0,0.15)] text-white rounded-full text-normal font-extrabold hover:bg-black transition-colors disabled:opacity-60 pointer-events-auto"
             >
-              {isSubmitting ? "Generating..." : "Next →"}
+              {isSubmitting ? "Generating..." : sources.some((s) => s.status === "uploading") ? "Uploading..." : "Next →"}
             </button>
           </div>
         </form>

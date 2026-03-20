@@ -8,7 +8,7 @@ export interface GenerateJobData {
   className: string
   questionTypes: { type: string; count: number; marks: number }[]
   additionalInfo?: string
-  fileText?: string
+  sourceIds: string[]
 }
 
 export const assignmentQueue = new Queue<GenerateJobData>("assignment-generate", {

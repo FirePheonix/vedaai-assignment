@@ -13,7 +13,7 @@ export interface IAssignment extends Document {
   questionTypes: IQuestionType[]
   additionalInfo?: string
   fileUrl?: string
-  fileText?: string
+  sourceIds: string[]
   jobId?: string
   status: "pending" | "queued" | "processing" | "done" | "failed"
   paperId?: Types.ObjectId
@@ -35,7 +35,7 @@ const AssignmentSchema = new Schema<IAssignment>(
     questionTypes: { type: [QuestionTypeSchema], required: true },
     additionalInfo: { type: String, default: "" },
     fileUrl: { type: String },
-    fileText: { type: String },
+    sourceIds: { type: [String], default: [] },
     jobId: { type: String },
     status: {
       type: String,

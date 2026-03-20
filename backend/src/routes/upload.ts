@@ -1,45 +1,86 @@
 import express from "express"
 import multer from "multer"
 import pdfParse from "pdf-parse"
+import OpenAI from "openai"
 import { logger } from "@/lib/logger"
+import { storeChunks } from "@/lib/embed"
 
 const router = express.Router()
+const openai = new OpenAI()
 
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter(_req, file, cb) {
-    const allowed = ["application/pdf", "text/plain"]
+    const allowed = [
+      "application/pdf",
+      "text/plain",
+      "image/png",
+      "image/jpeg",
+      "image/webp",
+    ]
     cb(null, allowed.includes(file.mimetype))
   },
 })
 
+async function extractText(file: Express.Multer.File): Promise<string> {
+  if (file.mimetype === "application/pdf") {
+    const result = await pdfParse(file.buffer)
+    return result.text.trim()
+  }
+
+  if (file.mimetype.startsWith("image/")) {
+    const base64 = file.buffer.toString("base64")
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "image_url",
+              image_url: { url: `data:${file.mimetype};base64,${base64}` },
+            },
+            {
+              type: "text",
+              text: "Extract all text, topics, concepts, diagrams, and key information from this image. This will be used as reference material to generate exam questions.",
+            },
+          ],
+        },
+      ],
+      max_tokens: 4096,
+    })
+    return response.choices[0].message.content?.trim() ?? ""
+  }
+
+  return file.buffer.toString("utf-8").trim()
+}
+
 router.post("/", upload.single("file"), async (req, res) => {
   if (!req.file) {
-    res.status(400).json({ error: "No file or unsupported type. Send a PDF or plain-text file." })
+    res.status(400).json({ error: "No file or unsupported type. Send a PDF, image, or plain-text file." })
     return
   }
 
   try {
-    let fileText = ""
+    const text = await extractText(req.file)
 
-    if (req.file.mimetype === "application/pdf") {
-      const result = await pdfParse(req.file.buffer)
-      fileText = result.text.trim()
-    } else {
-      fileText = req.file.buffer.toString("utf-8").trim()
-    }
-
-    if (!fileText) {
+    if (!text) {
       res.status(422).json({ error: "Could not extract text from file." })
       return
     }
 
-    logger.info({ bytes: req.file.size, chars: fileText.length }, "File uploaded and parsed")
-    res.json({ fileText: fileText.slice(0, 8000) })
+    logger.info(
+      { filename: req.file.originalname, bytes: req.file.size, chars: text.length },
+      "File extracted"
+    )
+
+    const { sourceId, chunksStored } = await storeChunks(req.file.originalname, text)
+
+    res.json({ sourceId, filename: req.file.originalname, chunksStored, charCount: text.length })
   } catch (err) {
-    logger.error({ err }, "File parse failed")
-    res.status(500).json({ error: "Failed to parse file." })
+    logger.error({ err }, "File upload failed")
+    res.status(500).json({ error: "Failed to process file." })
   }
 })
 

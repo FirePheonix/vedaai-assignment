@@ -16,7 +16,7 @@ const CreateAssignmentInput = z.object({
   dueDate: z.string().datetime(),
   questionTypes: z.array(QuestionTypeInput).min(1),
   additionalInfo: z.string().max(500).optional(),
-  fileText: z.string().max(8000).optional(),
+  sourceIds: z.array(z.string()).optional(),
 })
 
 export const assignmentRouter = router({
@@ -27,7 +27,7 @@ export const assignmentRouter = router({
       dueDate: new Date(input.dueDate),
       questionTypes: input.questionTypes,
       additionalInfo: input.additionalInfo ?? "",
-      fileText: input.fileText ?? "",
+      sourceIds: input.sourceIds ?? [],
       status: "pending",
     })
 
@@ -72,7 +72,7 @@ export const assignmentRouter = router({
         className: input.className,
         questionTypes: assignment.questionTypes,
         additionalInfo: assignment.additionalInfo,
-        fileText: assignment.fileText,
+        sourceIds: assignment.sourceIds ?? [],
       })
 
       await Assignment.findByIdAndUpdate(input.id, { jobId: job.id })

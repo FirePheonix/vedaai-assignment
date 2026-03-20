@@ -5,16 +5,32 @@ import { useRouter } from "next/navigation"
 import { Download, Sparkles } from "lucide-react"
 import { useAssignmentStore } from "@/store/assignmentStore"
 import Header from "@/components/ui/Header"
+import { trpc } from "@/lib/trpc"
 
 export default function PaperPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
-  const { paper, setJobStatus, setJobProgress } = useAssignmentStore()
+  const { paper: storePaper, setJobStatus, setJobProgress } = useAssignmentStore()
+
+  const { data: fetchedPaper, isLoading } = trpc.paper.getById.useQuery(
+    { id },
+    { enabled: !storePaper }
+  )
+
+  const paper = storePaper ?? fetchedPaper
 
   const handleRegenerate = () => {
     setJobStatus("queued")
     setJobProgress(0)
     router.push(`/loading/${id}`)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-gray-50">
+        <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-800 rounded-full animate-spin" />
+      </div>
+    )
   }
 
   if (!paper) {
