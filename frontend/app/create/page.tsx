@@ -8,6 +8,7 @@ import { Plus, X, Minus, Mic, CalendarDays, UploadCloud } from "lucide-react"
 import Header from "@/components/ui/Header"
 import { AssignmentFormSchema, type AssignmentFormData } from "@/lib/schemas"
 import { useAssignmentStore } from "@/store/assignmentStore"
+import { trpc } from "@/lib/trpc"
 import { cn } from "@/lib/utils"
 
 const QUESTION_TYPE_OPTIONS = [
@@ -23,9 +24,12 @@ const QUESTION_TYPE_OPTIONS = [
 
 export default function CreateAssignmentPage() {
   const router = useRouter()
-  const { setFormData, setJobId, setJobStatus } = useAssignmentStore()
+  const { setFormData, setAssignmentId, setJobId, setJobStatus } = useAssignmentStore()
   const [dragActive, setDragActive] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const createMutation = trpc.assignment.create.useMutation()
+  const generateMutation = trpc.assignment.generate.useMutation()
 
   const {
     register,
@@ -37,6 +41,8 @@ setValue,
     resolver: zodResolver(AssignmentFormSchema),
     defaultValues: {
       title: "",
+      subject: "",
+      className: "",
       dueDate: "",
       questionTypes: [
         { id: "1", type: "Multiple Choice Questions", count: 4, marks: 1 },
@@ -72,11 +78,18 @@ setValue,
 
   const onSubmit = async (data: AssignmentFormData) => {
     setFormData(data)
-    // Simulate job creation — will be replaced with real API call
-    const mockJobId = crypto.randomUUID()
-    setJobId(mockJobId)
+    const { assignmentId } = await createMutation.mutateAsync({
+      title: data.title,
+      subject: data.subject,
+      dueDate: new Date(data.dueDate).toISOString(),
+      questionTypes: data.questionTypes.map(({ type, count, marks }) => ({ type, count, marks })),
+      additionalInfo: data.additionalInfo,
+    })
+    setAssignmentId(assignmentId)
+    const { jobId } = await generateMutation.mutateAsync({ id: assignmentId, className: data.className })
+    setJobId(jobId ?? "")
     setJobStatus("queued")
-    router.push(`/loading/${mockJobId}`)
+    router.push(`/loading/${assignmentId}`)
   }
 
   return (
@@ -128,6 +141,37 @@ setValue,
             <p className="text-[12px] md:text-normal text-gray-400 md:text-gray-400 mb-6 lg:mb-8 font-medium">
               Basic information about your assignment
             </p>
+
+            {/* Title / Subject / Class */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+              <div className="md:col-span-1">
+                <label className="block text-normal font-extrabold text-gray-900 mb-2">Title</label>
+                <input
+                  {...register("title")}
+                  placeholder="e.g. Mid-term Physics Test"
+                  className={cn("w-full bg-white border border-gray-100/50 rounded-2xl px-5 py-3.5 text-normal text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-200 shadow-sm", errors.title && "border-red-400")}
+                />
+                {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title.message}</p>}
+              </div>
+              <div>
+                <label className="block text-normal font-extrabold text-gray-900 mb-2">Subject</label>
+                <input
+                  {...register("subject")}
+                  placeholder="e.g. Physics"
+                  className={cn("w-full bg-white border border-gray-100/50 rounded-2xl px-5 py-3.5 text-normal text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-200 shadow-sm", errors.subject && "border-red-400")}
+                />
+                {errors.subject && <p className="text-red-500 text-xs mt-1">{errors.subject.message}</p>}
+              </div>
+              <div>
+                <label className="block text-normal font-extrabold text-gray-900 mb-2">Class</label>
+                <input
+                  {...register("className")}
+                  placeholder="e.g. 8th Grade"
+                  className={cn("w-full bg-white border border-gray-100/50 rounded-2xl px-5 py-3.5 text-normal text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-200 shadow-sm", errors.className && "border-red-400")}
+                />
+                {errors.className && <p className="text-red-500 text-xs mt-1">{errors.className.message}</p>}
+              </div>
+            </div>
 
             {/* File upload */}
             <div

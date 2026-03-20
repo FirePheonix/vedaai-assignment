@@ -5,91 +5,26 @@ import Link from "next/link"
 import { Search, ListFilter, MoreVertical, Plus } from "lucide-react"
 import Header from "@/components/ui/Header"
 import { useRouter } from "next/navigation"
-import { useAssignmentStore } from "@/store/assignmentStore"
-
-const MOCK_ASSIGNMENTS = Array.from({ length: 10 }, (_, i) => ({
-  id: String(i + 1),
-  title: "Quiz on Electricity",
-  assignedOn: "20-06-2025",
-  dueDate: "21-06-2025",
-}))
+import { trpc } from "@/lib/trpc"
 
 function AssignmentCard({
   id,
   title,
   assignedOn,
   dueDate,
+  paperId,
 }: {
   id: string
   title: string
   assignedOn: string
   dueDate: string
+  paperId: string | null
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const router = useRouter()
-  const setPaper = useAssignmentStore((state) => state.setPaper)
 
   const handleCardClick = () => {
-    // Generate an exact mock paper structure matching the UI screenshot
-    setPaper({
-      id: id,
-      schoolName: "Delhi Public School, Sector-4, Bokaro",
-      subject: "Science", // it is just for now
-      className: "8th grade",
-      timeAllowed: "45 minutes",
-      maximumMarks: 20,
-      totalQuestions: 5,
-      createdAt: new Date().toISOString(),
-      sections: [
-        {
-          id: "1",
-          title: "Section A",
-          questionType: "Short Answer Questions",
-          instruction: "Attempt all questions. Each question carries 2 marks",
-          marksPerQuestion: 2,
-          questions: [
-            {
-              id: "q1",
-              text: "Define electroplating. Explain its purpose.",
-              marks: 2,
-              difficulty: "Easy",
-            },
-            {
-              id: "q2",
-              text: "What is the role of a conductor in the process of electrolysis?",
-              marks: 2,
-              difficulty: "Moderate",
-            },
-            {
-              id: "q3",
-              text: "Why does a solution of copper sulfate conduct electricity?",
-              marks: 2,
-              difficulty: "Easy",
-            },
-            {
-              id: "q4",
-              text: "Describe one example of the chemical effect of electric current in daily life.",
-              marks: 2,
-              difficulty: "Moderate",
-            },
-            {
-              id: "q5",
-              text: "Explain why electric current is said to have chemical effects.",
-              marks: 2,
-              difficulty: "Moderate",
-            },
-          ],
-        },
-      ],
-      answerKey: [
-        {
-          questionId: "q1",
-          answer:
-            "Electroplating is the process of depositing a thin layer of metal on the surface of another metal using electric current. Its purpose is to prevent corrosion, improve appearance, or increase thickness.",
-        },
-      ],
-    })
-    router.push(`/paper/${id}`)
+    if (paperId) router.push(`/paper/${paperId}`)
   }
 
   return (
@@ -157,8 +92,9 @@ function AssignmentCard({
 export default function AssignmentsPage() {
   const router = useRouter()
   const [search, setSearch] = useState("")
+  const { data: assignments = [] } = trpc.assignment.list.useQuery()
 
-  const filtered = MOCK_ASSIGNMENTS.filter((a) =>
+  const filtered = assignments.filter((a) =>
     a.title.toLowerCase().includes(search.toLowerCase())
   )
 
@@ -208,7 +144,14 @@ export default function AssignmentsPage() {
         {/* Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 px-1 pb-40">
           {filtered.map((a) => (
-            <AssignmentCard key={a.id} {...a} />
+            <AssignmentCard
+              key={a.id}
+              id={a.id}
+              title={a.title}
+              paperId={a.paperId ?? null}
+              assignedOn={new Date(a.assignedOn).toLocaleDateString("en-GB").replace(/\//g, "-")}
+              dueDate={new Date(a.dueDate).toLocaleDateString("en-GB").replace(/\//g, "-")}
+            />
           ))}
           {filtered.length === 0 && (
             <div className="col-span-1 md:col-span-2 text-center py-16 text-gray-400 font-medium">

@@ -3,35 +3,15 @@
 import { useEffect, useRef } from "react"
 import { io, Socket } from "socket.io-client"
 import { useAssignmentStore } from "@/store/assignmentStore"
-import type { QuestionPaper } from "@/lib/schemas"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? ""
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
 
-interface JobProgressEvent {
-  jobId: string
-  progress: number
-  step: string
-}
-
-interface JobDoneEvent {
-  jobId: string
-  paper: QuestionPaper
-}
-
-interface JobFailedEvent {
-  jobId: string
-  message: string
-}
-
-/**
- * This hook connects to the backend Socket.IO server and listens for job events.
- */
-export function useSocket(jobId: string | null) {
+export function useSocket(assignmentId: string | null) {
   const socketRef = useRef<Socket | null>(null)
-  const { setJobProgress, addJobStep, setJobStatus, setPaper, setError } = useAssignmentStore()
+  const { setJobProgress, addJobStep, setJobStatus, setError } = useAssignmentStore()
 
   useEffect(() => {
-    if (!jobId || !API_URL) return
+    if (!assignmentId) return
 
     const socket = io(API_URL, {
       transports: ["websocket"],
@@ -41,30 +21,32 @@ export function useSocket(jobId: string | null) {
     socketRef.current = socket
 
     socket.on("connect", () => {
-      socket.emit("subscribe:job", { jobId })
+      socket.emit("join:job", assignmentId)
     })
 
-    socket.on("job:progress", ({ progress, step }: JobProgressEvent) => {
-      setJobProgress(progress)
-      addJobStep(step)
+    socket.on("job:progress", ({ step, message }: { step: string; message: string }) => {
+      addJobStep(message)
+      const progressMap: Record<string, number> = {
+        generating: 30,
+        validating: 70,
+        saving: 90,
+      }
+      setJobProgress(progressMap[step] ?? 50)
     })
 
-    socket.on("job:done", ({ paper }: JobDoneEvent) => {
-      setPaper(paper)
+    socket.on("job:done", ({ paperId }: { paperId: string }) => {
+      setJobProgress(100)
       setJobStatus("done")
+      useAssignmentStore.getState().setPaperId(paperId)
     })
 
-    socket.on("job:failed", ({ message }: JobFailedEvent) => {
+    socket.on("job:error", ({ message }: { message: string }) => {
       setError(message)
       setJobStatus("failed")
-    })
-
-    socket.on("connect_error", () => {
-      // Silently fall back — mock simulation stays active
     })
 
     return () => {
       socket.disconnect()
     }
-  }, [jobId, setJobProgress, addJobStep, setJobStatus, setPaper, setError])
+  }, [assignmentId, addJobStep, setJobProgress, setJobStatus, setError])
 }

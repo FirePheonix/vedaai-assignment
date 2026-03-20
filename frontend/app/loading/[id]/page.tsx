@@ -7,146 +7,19 @@ import { useAssignmentStore } from "@/store/assignmentStore"
 import { useSocket } from "@/lib/hooks/useSocket"
 import { cn } from "@/lib/utils"
 
-// frontend only mocked simulation of job progress, will be replaced by real Socket.IO later
-function useJobSimulation(jobId: string) {
-  const { setJobProgress, addJobStep, setJobStatus, setPaper } = useAssignmentStore()
-
-  // Zustand actions are stable references — safe to include in deps
-  useEffect(() => {
-    const steps = [
-      { msg: "Structuring your prompt...", pct: 15 },
-      { msg: "Sending to AI model...", pct: 30 },
-      { msg: "Generating Section A...", pct: 50 },
-      { msg: "Generating Section B...", pct: 70 },
-      { msg: "Validating output schema...", pct: 85 },
-      { msg: "Saving to database...", pct: 95 },
-    ]
-
-    setJobStatus("processing")
-    let i = 0
-
-    const interval = setInterval(() => {
-      if (i < steps.length) {
-        setJobProgress(steps[i].pct)
-        addJobStep(steps[i].msg)
-        i++
-      } else {
-        clearInterval(interval)
-        setJobProgress(100)
-        setJobStatus("done")
-
-        // Mock paper data
-        setPaper({
-          id: jobId,
-          schoolName: "Delhi Public School, Sector-4, Bokaro",
-          subject: "Science",
-          className: "Class: 8th",
-          timeAllowed: "45 minutes",
-          maximumMarks: 20,
-          totalQuestions: 10,
-          createdAt: new Date().toISOString(),
-          sections: [
-            {
-              id: "a",
-              title: "Section A",
-              questionType: "Short Answer Questions",
-              instruction: "Attempt all questions. Each question carries 2 marks",
-              marksPerQuestion: 2,
-              questions: [
-                {
-                  id: "q1",
-                  text: "Define electroplating. Explain its purpose.",
-                  difficulty: "Easy",
-                  marks: 2,
-                },
-                {
-                  id: "q2",
-                  text: "What is the role of a conductor in the process of electrolysis?",
-                  difficulty: "Moderate",
-                  marks: 2,
-                },
-                {
-                  id: "q3",
-                  text: "Why does a solution of copper sulfate conduct electricity?",
-                  difficulty: "Easy",
-                  marks: 2,
-                },
-                {
-                  id: "q4",
-                  text: "Describe one example of the chemical effect of electric current in daily life.",
-                  difficulty: "Moderate",
-                  marks: 2,
-                },
-                {
-                  id: "q5",
-                  text: "Explain why electric current is said to have chemical effects.",
-                  difficulty: "Moderate",
-                  marks: 2,
-                },
-              ],
-            },
-            {
-              id: "b",
-              title: "Section B",
-              questionType: "Long Answer Questions",
-              instruction: "Attempt any 3 questions. Each question carries 5 marks",
-              marksPerQuestion: 5,
-              questions: [
-                {
-                  id: "q6",
-                  text: "How is sodium hydroxide prepared during the electrolysis of brine? Write the chemical reaction involved.",
-                  difficulty: "Challenging",
-                  marks: 5,
-                },
-                {
-                  id: "q7",
-                  text: "What happens at the cathode and anode during the electrolysis of water? Name the gases evolved.",
-                  difficulty: "Challenging",
-                  marks: 5,
-                },
-                {
-                  id: "q8",
-                  text: "Explain how copper is deposited during the electroplating of an object.",
-                  difficulty: "Easy",
-                  marks: 5,
-                },
-              ],
-            },
-          ],
-          answerKey: [
-            {
-              questionId: "q1",
-              answer:
-                "Electroplating is the process of coating a metal object with a thin layer of another metal using electrolysis.",
-            },
-            {
-              questionId: "q2",
-              answer:
-                "A conductor allows the flow of electric current by providing free electrons or ions.",
-            },
-          ],
-        })
-      }
-    }, 900)
-
-    return () => clearInterval(interval)
-  }, [jobId, setJobProgress, addJobStep, setJobStatus, setPaper])
-}
-
 export default function LoadingPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
-  const { jobStatus, jobProgress, jobSteps } = useAssignmentStore()
+  const { jobStatus, jobProgress, jobSteps, paperId } = useAssignmentStore()
 
-  useJobSimulation(id)
-  useSocket(id) // will connect to backend Socket.IO in real implementation
+  useSocket(id)
 
   useEffect(() => {
-    if (jobStatus === "done") {
-      const t = setTimeout(() => router.push(`/paper/${id}`), 800)
+    if (jobStatus === "done" && paperId) {
+      const t = setTimeout(() => router.push(`/paper/${paperId}`), 800)
       return () => clearTimeout(t)
     }
-  }, [jobStatus, id, router])
+  }, [jobStatus, paperId, router])
 
   const failed = jobStatus === "failed"
 

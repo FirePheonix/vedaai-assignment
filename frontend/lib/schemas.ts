@@ -9,7 +9,8 @@ export const QuestionTypeSchema = z.object({
 
 export const AssignmentFormSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
-  subject: z.string().optional(),
+  subject: z.string().min(1, "Subject is required"),
+  className: z.string().min(1, "Class is required"),
   file: z.instanceof(File).optional().nullable(),
   dueDate: z
     .string()
