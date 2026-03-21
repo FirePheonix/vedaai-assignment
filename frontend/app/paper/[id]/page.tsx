@@ -2,10 +2,11 @@
 
 import { use, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Download, Sparkles, Pencil, Check, X, Plus, Trash2, Send, ChevronDown } from "lucide-react"
+import { Download, Sparkles, Pencil, Check, X, Plus, Trash2, Send, ChevronDown, Loader2 } from "lucide-react"
 import { useAssignmentStore } from "@/store/assignmentStore"
 import Header from "@/components/ui/Header"
 import { trpc } from "@/lib/trpc"
+import { downloadPaperPDF } from "@/lib/buildPaperPdf"
 
 type Difficulty = "Easy" | "Moderate" | "Challenging"
 
@@ -106,6 +107,17 @@ export default function PaperPage({ params }: { params: Promise<{ id: string }> 
   const [editedSections, setEditedSections] = useState<Section[]>([])
   const [showPublish, setShowPublish] = useState(false)
   const [publishedClassName, setPublishedClassName] = useState<string | null>(null)
+  const [downloading, setDownloading] = useState(false)
+
+  const handleDownload = async () => {
+    if (!paper) return
+    setDownloading(true)
+    try {
+      await downloadPaperPDF(paper)
+    } finally {
+      setDownloading(false)
+    }
+  }
 
   const updateMutation = trpc.paper.update.useMutation({
     onSuccess: () => {
@@ -243,12 +255,19 @@ export default function PaperPage({ params }: { params: Promise<{ id: string }> 
             </p>
             <div className="flex items-center gap-3 flex-wrap">
               <button
-                onClick={() => window.print()}
-                className="flex items-center gap-2.5 bg-white text-gray-900 text-[14px] md:text-normal font-extrabold px-5 md:px-6 py-2.5 rounded-[20px] transition-colors shadow-sm"
+                onClick={handleDownload}
+                disabled={downloading}
+                className="flex items-center gap-2.5 bg-white text-gray-900 text-[14px] md:text-normal font-extrabold px-5 md:px-6 py-2.5 rounded-[20px] transition-colors shadow-sm disabled:opacity-60"
               >
-                <Download size={16} strokeWidth={2.5} className="hidden md:block" />
-                <Download size={14} strokeWidth={2.5} className="md:hidden block" />
-                Download <span className="hidden md:inline">as PDF</span>
+                {downloading ? (
+                  <Loader2 size={15} className="animate-spin" />
+                ) : (
+                  <>
+                    <Download size={16} strokeWidth={2.5} className="hidden md:block" />
+                    <Download size={14} strokeWidth={2.5} className="md:hidden block" />
+                  </>
+                )}
+                {downloading ? "Generating…" : <>Download <span className="hidden md:inline">as PDF</span></>}
               </button>
               <button
                 onClick={handleRegenerate}

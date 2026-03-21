@@ -14,6 +14,9 @@ export default clerkMiddleware(async (auth, request) => {
   if (isPublicRoute(request)) return
 
   const { sessionClaims } = await auth.protect()
+
+  // Role is present only after configuring the Clerk JWT template:
+  // Dashboard → Configure → Sessions → add: { "metadata": "{{user.public_metadata}}" }
   const role = (sessionClaims?.metadata as Record<string, string> | undefined)?.role ?? null
 
   // No role yet → send to onboarding (except if already there)

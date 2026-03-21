@@ -2,10 +2,41 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Search, FileText, Download, Eye } from "lucide-react"
+import { Search, FileText, Download, Eye, Loader2 } from "lucide-react"
 import Header from "@/components/ui/Header"
 import { trpc } from "@/lib/trpc"
 import { useRouter } from "next/navigation"
+import { downloadPaperPDF } from "@/lib/buildPaperPdf"
+
+function DownloadButton({ paperId }: { paperId: string }) {
+  const [loading, setLoading] = useState(false)
+  const utils = trpc.useUtils()
+
+  const handleDownload = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setLoading(true)
+    try {
+      const paper = await utils.paper.getById.fetch({ id: paperId })
+      await downloadPaperPDF(paper)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <button
+      onClick={handleDownload}
+      disabled={loading}
+      className="w-8 h-8 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center hover:bg-orange-100 transition-colors disabled:opacity-50"
+    >
+      {loading ? (
+        <Loader2 size={13} className="animate-spin text-orange-400" />
+      ) : (
+        <Download size={14} strokeWidth={2.5} className="text-orange-500" />
+      )}
+    </button>
+  )
+}
 
 function PaperCard({
   title,
@@ -13,7 +44,6 @@ function PaperCard({
   generatedOn,
   paperId,
 }: {
-  id: string
   title: string
   subject: string
   generatedOn: string
@@ -52,15 +82,7 @@ function PaperCard({
           >
             <Eye size={14} strokeWidth={2.5} className="text-gray-500" />
           </Link>
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              window.print()
-            }}
-            className="w-8 h-8 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center hover:bg-orange-100 transition-colors"
-          >
-            <Download size={14} strokeWidth={2.5} className="text-orange-500" />
-          </button>
+          <DownloadButton paperId={paperId} />
         </div>
       </div>
     </div>
@@ -131,7 +153,6 @@ export default function LibraryPage() {
           {filtered.map((a) => (
             <PaperCard
               key={a.id}
-              id={a.id}
               title={a.title}
               subject={a.subject}
               generatedOn={a.assignedOn}
