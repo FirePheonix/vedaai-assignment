@@ -1,16 +1,20 @@
 "use client"
 
 import { useState } from "react"
+import { useClerk } from "@clerk/nextjs"
 import { GraduationCap, BookOpen, Loader2 } from "lucide-react"
 import { trpc } from "@/lib/trpc"
 
 export default function OnboardingPage() {
+  const { session } = useClerk()
   const [selected, setSelected] = useState<"teacher" | "student" | null>(null)
   const [schoolName, setSchoolName] = useState("")
 
   const setRole = trpc.user.setRole.useMutation({
-    onSuccess: (data) => {
-      // Force a full reload so Clerk session claims update
+    onSuccess: async (data) => {
+      // Reload the Clerk session so the new publicMetadata.role
+      // is reflected in sessionClaims before the middleware checks it
+      await session?.reload()
       window.location.href = data.role === "student" ? "/student/join" : "/home"
     },
   })
