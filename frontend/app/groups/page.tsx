@@ -6,12 +6,48 @@ import Header from "@/components/ui/Header"
 import { useRouter } from "next/navigation"
 
 const GROUPS = [
-  { id: "1", name: "Class 8A", subject: "Mathematics", students: 34, color: "bg-violet-100 text-violet-600" },
-  { id: "2", name: "Class 9B", subject: "Science", students: 28, color: "bg-blue-100 text-blue-600" },
-  { id: "3", name: "Class 10A", subject: "English", students: 31, color: "bg-emerald-100 text-emerald-600" },
-  { id: "4", name: "Class 7C", subject: "History", students: 29, color: "bg-amber-100 text-amber-600" },
-  { id: "5", name: "Class 11 Science", subject: "Physics", students: 22, color: "bg-pink-100 text-pink-600" },
-  { id: "6", name: "Class 12 Arts", subject: "Political Science", students: 18, color: "bg-orange-100 text-orange-600" },
+  {
+    id: "1",
+    name: "Class 8A",
+    subject: "Mathematics",
+    students: 34,
+    color: "bg-violet-100 text-violet-600",
+  },
+  {
+    id: "2",
+    name: "Class 9B",
+    subject: "Science",
+    students: 28,
+    color: "bg-blue-100 text-blue-600",
+  },
+  {
+    id: "3",
+    name: "Class 10A",
+    subject: "English",
+    students: 31,
+    color: "bg-emerald-100 text-emerald-600",
+  },
+  {
+    id: "4",
+    name: "Class 7C",
+    subject: "History",
+    students: 29,
+    color: "bg-amber-100 text-amber-600",
+  },
+  {
+    id: "5",
+    name: "Class 11 Science",
+    subject: "Physics",
+    students: 22,
+    color: "bg-pink-100 text-pink-600",
+  },
+  {
+    id: "6",
+    name: "Class 12 Arts",
+    subject: "Political Science",
+    students: 18,
+    color: "bg-orange-100 text-orange-600",
+  },
 ]
 
 function GroupCard({
@@ -99,7 +135,19 @@ export default function GroupsPage() {
             onClick={() => router.back()}
             className="absolute left-0 w-10 h-10 bg-gray-200/50 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-800"><path d="m15 18-6-6 6-6" /></svg>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-gray-800"
+            >
+              <path d="m15 18-6-6 6-6" />
+            </svg>
           </button>
           <h1 className="text-heading text-[16px] text-gray-900 font-extrabold">My Groups</h1>
         </div>
@@ -110,7 +158,9 @@ export default function GroupsPage() {
             <span className="w-2.5 h-2.5 rounded-full bg-violet-400 inline-block shadow-[0_0_8px_rgba(167,139,250,0.8)]" />
             <h1 className="text-heading text-gray-900 mt-1">My Groups</h1>
           </div>
-          <p className="text-normal text-gray-400 ml-4 mt-1.5">Manage your classes and student groups.</p>
+          <p className="text-normal text-gray-400 ml-4 mt-1.5">
+            Manage your classes and student groups.
+          </p>
         </div>
 
         {/* Search bar */}

@@ -113,7 +113,19 @@ export default function LibraryPage() {
             onClick={() => router.back()}
             className="absolute left-0 w-10 h-10 bg-gray-200/50 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-800"><path d="m15 18-6-6 6-6" /></svg>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-gray-800"
+            >
+              <path d="m15 18-6-6 6-6" />
+            </svg>
           </button>
           <h1 className="text-heading text-[16px] text-gray-900 font-extrabold">My Library</h1>
         </div>
@@ -124,7 +136,9 @@ export default function LibraryPage() {
             <span className="w-2.5 h-2.5 rounded-full bg-blue-400 inline-block shadow-[0_0_8px_rgba(96,165,250,0.8)]" />
             <h1 className="text-heading text-gray-900 mt-1">My Library</h1>
           </div>
-          <p className="text-normal text-gray-400 ml-4 mt-1.5">All your generated question papers in one place.</p>
+          <p className="text-normal text-gray-400 ml-4 mt-1.5">
+            All your generated question papers in one place.
+          </p>
         </div>
 
         {/* Search */}

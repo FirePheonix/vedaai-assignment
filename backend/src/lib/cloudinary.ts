@@ -7,7 +7,11 @@ cloudinary.config({
   api_secret: env.CLOUDINARY_API_SECRET,
 })
 
-export async function uploadBuffer(buffer: Buffer, mimetype: string, folder = "submissions"): Promise<string> {
+export async function uploadBuffer(
+  buffer: Buffer,
+  mimetype: string,
+  folder = "submissions"
+): Promise<string> {
   return new Promise((resolve, reject) => {
     const resourceType = mimetype === "application/pdf" ? "raw" : "image"
 

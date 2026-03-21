@@ -31,7 +31,9 @@ export default function OnboardingPage() {
     <div className="min-h-screen bg-[#f2f4f7] flex items-center justify-center px-4">
       <div className="w-full max-w-lg">
         <div className="text-center mb-10">
-          <h1 className="text-[28px] font-extrabold text-gray-900 tracking-tight mb-2">Welcome to VedaAI</h1>
+          <h1 className="text-[28px] font-extrabold text-gray-900 tracking-tight mb-2">
+            Welcome to VedaAI
+          </h1>
           <p className="text-gray-500 text-[15px]">Tell us who you are to get started</p>
         </div>
 

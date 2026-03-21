@@ -10,14 +10,15 @@ export default function SubmissionsPage({ params }: { params: Promise<{ assignme
   const router = useRouter()
 
   const { data: assignment } = trpc.assignment.getById.useQuery({ id: assignmentId })
-  const { data: submissions = [], isLoading } = trpc.submission.getForAssignment.useQuery({ assignmentId })
+  const { data: submissions = [], isLoading } = trpc.submission.getForAssignment.useQuery({
+    assignmentId,
+  })
 
   const gradedCount = submissions.filter((s) => s.status === "graded").length
 
   return (
     <div className="flex flex-col h-full bg-[#f2f4f7] md:bg-transparent overflow-hidden px-4 md:px-0 py-4 md:pr-4 pb-24 md:pb-4">
       <div className="flex-1 overflow-y-auto max-w-2xl mx-auto w-full">
-
         <button
           onClick={() => router.push("/assignments")}
           className="flex items-center gap-2 text-gray-400 hover:text-gray-700 transition-colors text-[13px] font-semibold mb-5"
@@ -31,7 +32,9 @@ export default function SubmissionsPage({ params }: { params: Promise<{ assignme
           <p className="text-[12px] font-semibold text-gray-400 uppercase tracking-wide mb-1">
             {assignment?.subject}
           </p>
-          <h1 className="text-[20px] font-extrabold text-white mb-3">{assignment?.title ?? "Submissions"}</h1>
+          <h1 className="text-[20px] font-extrabold text-white mb-3">
+            {assignment?.title ?? "Submissions"}
+          </h1>
           <div className="flex items-center gap-4 text-[13px] font-semibold">
             <span className="text-gray-300">{submissions.length} submitted</span>
             <span className="text-gray-500">·</span>
@@ -64,7 +67,13 @@ export default function SubmissionsPage({ params }: { params: Promise<{ assignme
                 <div className="flex-1 min-w-0">
                   <p className="font-extrabold text-gray-900 text-[14px]">{s.studentName}</p>
                   <p className="text-[12px] text-gray-400 mt-0.5">
-                    Submitted {new Date(s.submittedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                    Submitted{" "}
+                    {new Date(s.submittedAt).toLocaleDateString("en-GB", {
+                      day: "numeric",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
                   </p>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">

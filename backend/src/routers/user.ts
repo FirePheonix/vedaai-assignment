@@ -78,7 +78,10 @@ export const userRouter = router({
           publicMetadata: { role: input.role },
         })
       } catch {
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to update Clerk metadata" })
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update Clerk metadata",
+        })
       }
 
       return { success: true, role: input.role }

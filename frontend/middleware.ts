@@ -5,8 +5,14 @@ const isPublicRoute = createRouteMatcher(["/", "/sign-in(.*)", "/sign-up(.*)"])
 const isOnboarding = createRouteMatcher(["/onboarding(.*)"])
 
 const teacherOnlyPaths = createRouteMatcher([
-  "/create(.*)", "/analytics(.*)", "/assignments(.*)", "/paper(.*)",
-  "/submissions(.*)", "/grade(.*)", "/library(.*)", "/toolkit(.*)",
+  "/create(.*)",
+  "/analytics(.*)",
+  "/assignments(.*)",
+  "/paper(.*)",
+  "/submissions(.*)",
+  "/grade(.*)",
+  "/library(.*)",
+  "/toolkit(.*)",
 ])
 const studentOnlyPaths = createRouteMatcher(["/student(.*)"])
 

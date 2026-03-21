@@ -10,7 +10,9 @@ import { trpc } from "@/lib/trpc"
 function StatCard({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="bg-white rounded-[32px] p-6 flex flex-col items-center justify-center flex-1 shadow-[0_12px_44px_rgba(0,0,0,0.04)] min-h-[140px]">
-      <span className="text-[44px] font-extrabold text-[#111111] leading-none tracking-tight mb-2">{value}</span>
+      <span className="text-[44px] font-extrabold text-[#111111] leading-none tracking-tight mb-2">
+        {value}
+      </span>
       <span className="text-[14px] font-[800] text-[#111111] text-center">{label}</span>
     </div>
   )
@@ -24,8 +26,10 @@ export default function HomePage() {
 
   const totalAssignments = assignments.length
   const papersGenerated = assignments.filter((a) => a.status === "done").length
-  const pending = assignments.filter((a) => ["pending", "queued", "processing"].includes(a.status)).length
-  const timeSaved = Math.round((papersGenerated * 15) / 60 * 10) / 10
+  const pending = assignments.filter((a) =>
+    ["pending", "queued", "processing"].includes(a.status)
+  ).length
+  const timeSaved = Math.round(((papersGenerated * 15) / 60) * 10) / 10
 
   const gradedTotal = analytics?.gradedCount ?? 0
   const gradedThisWeek = analytics?.gradedThisWeek ?? 0
@@ -43,9 +47,7 @@ export default function HomePage() {
   return (
     <div className="flex flex-col h-full bg-[#f2f4f7] md:bg-transparent overflow-hidden px-4 md:px-0 py-4 md:pr-4 pb-24 md:pb-4 gap-6">
       <div className="flex-1 overflow-y-auto w-full relative h-[calc(100vh-2rem)] flex flex-col gap-6">
-
         <div className="flex flex-col xl:flex-row gap-5">
-
           {/* Left: greeting + toolkit */}
           <div className="bg-white rounded-[32px] p-8 lg:p-10 flex flex-col justify-between shadow-[0_8px_30px_rgba(0,0,0,0.04)] lg:w-full xl:w-[57%] min-h-[380px] border border-gray-50/50">
             <div className="flex items-start justify-between mb-8">
@@ -64,7 +66,13 @@ export default function HomePage() {
                 <div className="absolute top-10 -right-2 w-2 h-2 rounded-full bg-[#fde1d3]" />
                 <div className="w-[100px] h-[100px] rounded-full overflow-hidden bg-white z-10 flex items-center justify-center border-4 border-white shadow-md">
                   {user?.imageUrl ? (
-                    <Image src={user.imageUrl} alt="Avatar" width={100} height={100} className="w-full h-full object-cover" />
+                    <Image
+                      src={user.imageUrl}
+                      alt="Avatar"
+                      width={100}
+                      height={100}
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
                     <span className="text-[38px]">👩‍🏫</span>
                   )}
@@ -74,9 +82,12 @@ export default function HomePage() {
 
             <div className="bg-[#f9fafb] border border-gray-200 rounded-[28px] p-6 flex items-center justify-between mt-auto shadow-sm">
               <div className="flex flex-col pr-4">
-                <h2 className="text-[20px] font-extrabold text-[#111111] mb-2 tracking-tight">AI Teacher&apos;s Toolkit</h2>
+                <h2 className="text-[20px] font-extrabold text-[#111111] mb-2 tracking-tight">
+                  AI Teacher&apos;s Toolkit
+                </h2>
                 <p className="text-[14px] font-medium text-[#7a818c] max-w-[340px] leading-relaxed">
-                  Create question papers, upload syllabi, and generate curriculum-aligned exams instantly.
+                  Create question papers, upload syllabi, and generate curriculum-aligned exams
+                  instantly.
                 </p>
               </div>
               <Link
@@ -96,8 +107,17 @@ export default function HomePage() {
                 {totalSubmissions > 0 ? "Reviewed this week" : "Papers Generated"}
               </h3>
               <div className="relative w-full max-w-[210px] aspect-[2/1] mt-10 flex flex-col items-center justify-end">
-                <svg className="absolute inset-0 w-full h-full overflow-visible" viewBox="0 0 100 50">
-                  <path d="M 5 50 A 45 45 0 0 1 95 50" fill="none" stroke="#333333" strokeWidth="18" strokeLinecap="round" />
+                <svg
+                  className="absolute inset-0 w-full h-full overflow-visible"
+                  viewBox="0 0 100 50"
+                >
+                  <path
+                    d="M 5 50 A 45 45 0 0 1 95 50"
+                    fill="none"
+                    stroke="#333333"
+                    strokeWidth="18"
+                    strokeLinecap="round"
+                  />
                   <path
                     d="M 5 50 A 45 45 0 0 1 95 50"
                     fill="none"
@@ -109,13 +129,17 @@ export default function HomePage() {
                   />
                   {gaugeVal > 0 && (
                     <g transform="translate(90.5, 30.5) rotate(25.6)">
-                      <path d="M0 -5 L1.2 -1.2 L5 0 L1.2 1.2 L0 5 L-1.2 1.2 L-5 0 L-1.2 -1.2 Z" fill="white" />
+                      <path
+                        d="M0 -5 L1.2 -1.2 L5 0 L1.2 1.2 L0 5 L-1.2 1.2 L-5 0 L-1.2 -1.2 Z"
+                        fill="white"
+                      />
                     </g>
                   )}
                 </svg>
                 <div className="absolute w-full bottom-0 flex flex-col items-center justify-end translate-y-[6px]">
                   <div className="text-[54px] font-extrabold leading-none tracking-tighter text-white flex items-baseline">
-                    {gaugeVal}<span className="text-[21px] font-bold text-gray-400 ml-1">/ {gaugeMax}</span>
+                    {gaugeVal}
+                    <span className="text-[21px] font-bold text-gray-400 ml-1">/ {gaugeMax}</span>
                   </div>
                   <div className="text-[13px] font-extrabold text-gray-400 mt-2 tracking-widest uppercase">
                     {totalSubmissions > 0 ? "Reviews" : "Papers"}
@@ -134,7 +158,9 @@ export default function HomePage() {
             <div className="flex flex-col gap-5 flex-1 min-w-[200px]">
               <StatCard label="Assignments Graded" value={gradedTotal} />
               <div className="bg-[#303030] rounded-[32px] p-6 flex flex-col items-center justify-center flex-1 shadow-[0_16px_40px_rgba(42,42,42,0.2)] min-h-[140px]">
-                <span className="text-[13px] font-medium text-white/90 text-center mb-1.5">Time Saved By AI</span>
+                <span className="text-[13px] font-medium text-white/90 text-center mb-1.5">
+                  Time Saved By AI
+                </span>
                 <span className="text-[38px] font-extrabold text-white leading-none tracking-tight mb-2">
                   {timeSaved > 0 ? `${timeSaved} hrs` : "—"}
                 </span>
@@ -150,7 +176,9 @@ export default function HomePage() {
         <div className="flex items-center gap-4 mt-4">
           <div className="flex items-center">
             <div className="w-3.5 h-3.5 rounded-full bg-[#4ebf7b] mr-3 shadow-[0_0_12px_rgba(78,191,123,0.6)] border-2 border-[#dcf4e5] blur-[0.5px]" />
-            <h2 className="text-[21px] font-extrabold text-[#111111] tracking-tight">Recent Assignments</h2>
+            <h2 className="text-[21px] font-extrabold text-[#111111] tracking-tight">
+              Recent Assignments
+            </h2>
           </div>
           <Link
             href="/assignments"
@@ -174,18 +202,18 @@ export default function HomePage() {
                 a.status === "done"
                   ? "bg-[#dcf4e5] text-[#3ea468]"
                   : a.status === "failed"
-                  ? "bg-red-50 text-red-500"
-                  : "bg-[#f4f4f4] text-[#a0a0a0]"
+                    ? "bg-red-50 text-red-500"
+                    : "bg-[#f4f4f4] text-[#a0a0a0]"
               const statusLabel =
                 a.status === "done"
                   ? "Generated"
                   : a.status === "processing"
-                  ? "Processing"
-                  : a.status === "queued"
-                  ? "Queued"
-                  : a.status === "failed"
-                  ? "Failed"
-                  : "Pending"
+                    ? "Processing"
+                    : a.status === "queued"
+                      ? "Queued"
+                      : a.status === "failed"
+                        ? "Failed"
+                        : "Pending"
               return (
                 <div
                   key={a.id}
@@ -194,8 +222,12 @@ export default function HomePage() {
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="text-[18px] font-extrabold text-gray-900 tracking-tight">{a.title}</h3>
-                      <span className={`px-3.5 py-1.5 rounded-full text-[11px] font-bold tracking-wide ${statusColor}`}>
+                      <h3 className="text-[18px] font-extrabold text-gray-900 tracking-tight">
+                        {a.title}
+                      </h3>
+                      <span
+                        className={`px-3.5 py-1.5 rounded-full text-[11px] font-bold tracking-wide ${statusColor}`}
+                      >
                         {statusLabel}
                       </span>
                     </div>
@@ -205,8 +237,14 @@ export default function HomePage() {
                     <span>{a.subject}</span>
                   </div>
                   <div className="flex flex-col items-end gap-1 text-[12px] font-bold text-gray-400 mt-6 pb-1">
-                    <p><span className="text-gray-900">Assigned: </span>{new Date(a.assignedOn).toLocaleDateString("en-GB").replace(/\//g, "-")}</p>
-                    <p><span className="text-gray-900">Due: </span>{new Date(a.dueDate).toLocaleDateString("en-GB").replace(/\//g, "-")}</p>
+                    <p>
+                      <span className="text-gray-900">Assigned: </span>
+                      {new Date(a.assignedOn).toLocaleDateString("en-GB").replace(/\//g, "-")}
+                    </p>
+                    <p>
+                      <span className="text-gray-900">Due: </span>
+                      {new Date(a.dueDate).toLocaleDateString("en-GB").replace(/\//g, "-")}
+                    </p>
                   </div>
                   <div className="w-full h-1 bg-[#fe5b2b] rounded-full mt-4 opacity-80" />
                 </div>
@@ -220,7 +258,9 @@ export default function HomePage() {
           <div className="flex items-center gap-3 md:ml-2 text-center md:text-left">
             <Sparkles size={20} strokeWidth={2.5} className="text-[#111111] shrink-0" />
             <span className="text-[16px] font-extrabold text-[#111111]">
-              {pending > 0 ? `${pending} assignment${pending > 1 ? "s" : ""} pending generation` : "Ready to create a new assignment?"}
+              {pending > 0
+                ? `${pending} assignment${pending > 1 ? "s" : ""} pending generation`
+                : "Ready to create a new assignment?"}
             </span>
           </div>
           <Link

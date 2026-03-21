@@ -23,10 +23,14 @@ export const submissionRouter = router({
 
       // Verify the student is in the class
       const cls = await Class.findOne({ _id: assignment.classId, studentIds: ctx.userId }).lean()
-      if (!cls) throw new TRPCError({ code: "FORBIDDEN", message: "You are not enrolled in this class" })
+      if (!cls)
+        throw new TRPCError({ code: "FORBIDDEN", message: "You are not enrolled in this class" })
 
       if (!assignment.paperId) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "No paper generated for this assignment" })
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "No paper generated for this assignment",
+        })
       }
 
       const paper = await QuestionPaper.findById(assignment.paperId).lean()
@@ -85,7 +89,10 @@ export const submissionRouter = router({
   getForAssignment: teacherProcedure
     .input(z.object({ assignmentId: z.string() }))
     .query(async ({ input, ctx }) => {
-      const assignment = await Assignment.findOne({ _id: input.assignmentId, userId: ctx.userId }).lean()
+      const assignment = await Assignment.findOne({
+        _id: input.assignmentId,
+        userId: ctx.userId,
+      }).lean()
       if (!assignment) throw new TRPCError({ code: "NOT_FOUND", message: "Assignment not found" })
 
       const submissions = await Submission.find({ assignmentId: input.assignmentId })
@@ -108,47 +115,48 @@ export const submissionRouter = router({
       }))
     }),
 
-  getById: protectedProcedure
-    .input(z.object({ id: z.string() }))
-    .query(async ({ input, ctx }) => {
-      const submission = await Submission.findById(input.id).lean()
-      if (!submission) throw new TRPCError({ code: "NOT_FOUND", message: "Submission not found" })
+  getById: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ input, ctx }) => {
+    const submission = await Submission.findById(input.id).lean()
+    if (!submission) throw new TRPCError({ code: "NOT_FOUND", message: "Submission not found" })
 
-      // Student can only see their own; teacher must own the assignment
-      if (submission.studentId !== ctx.userId) {
-        const assignment = await Assignment.findOne({
-          _id: submission.assignmentId,
-          userId: ctx.userId,
-        }).lean()
-        if (!assignment) throw new TRPCError({ code: "FORBIDDEN", message: "Access denied" })
-      }
+    // Student can only see their own; teacher must own the assignment
+    if (submission.studentId !== ctx.userId) {
+      const assignment = await Assignment.findOne({
+        _id: submission.assignmentId,
+        userId: ctx.userId,
+      }).lean()
+      if (!assignment) throw new TRPCError({ code: "FORBIDDEN", message: "Access denied" })
+    }
 
-      const assignment = await Assignment.findById(submission.assignmentId).lean()
+    const assignment = await Assignment.findById(submission.assignmentId).lean()
 
-      return {
-        id: submission._id.toString(),
-        assignmentId: submission.assignmentId.toString(),
-        assignmentTitle: assignment?.title ?? "",
-        subject: assignment?.subject ?? "",
-        studentName: submission.studentName,
-        fileUrl: submission.fileUrl,
-        filename: submission.filename,
-        fileType: submission.fileType,
-        status: submission.status,
-        totalMarksAwarded: submission.totalMarksAwarded ?? null,
-        maxMarks: submission.maxMarks,
-        feedback: submission.feedback ?? null,
-        submittedAt: submission.submittedAt.toISOString(),
-        gradedAt: submission.gradedAt?.toISOString() ?? null,
-      }
-    }),
+    return {
+      id: submission._id.toString(),
+      assignmentId: submission.assignmentId.toString(),
+      assignmentTitle: assignment?.title ?? "",
+      subject: assignment?.subject ?? "",
+      studentName: submission.studentName,
+      fileUrl: submission.fileUrl,
+      filename: submission.filename,
+      fileType: submission.fileType,
+      status: submission.status,
+      totalMarksAwarded: submission.totalMarksAwarded ?? null,
+      maxMarks: submission.maxMarks,
+      feedback: submission.feedback ?? null,
+      submittedAt: submission.submittedAt.toISOString(),
+      gradedAt: submission.gradedAt?.toISOString() ?? null,
+    }
+  }),
 
   getTeacherAnalytics: teacherProcedure.query(async ({ ctx }) => {
     const assignments = await Assignment.find({ userId: ctx.userId }).lean()
     const assignmentIds = assignments.map((a) => a._id)
 
     const submissions = await Submission.find({ assignmentId: { $in: assignmentIds } }).lean()
-    const graded = submissions.filter((s) => s.status === "graded" && s.totalMarksAwarded !== null && s.totalMarksAwarded !== undefined)
+    const graded = submissions.filter(
+      (s) =>
+        s.status === "graded" && s.totalMarksAwarded !== null && s.totalMarksAwarded !== undefined
+    )
     const scores = graded.map((s) => (s.totalMarksAwarded! / s.maxMarks) * 100)
 
     const avgScore = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : 0
@@ -189,7 +197,10 @@ export const submissionRouter = router({
 
   getStudentAnalytics: studentProcedure.query(async ({ ctx }) => {
     const submissions = await Submission.find({ studentId: ctx.userId }).lean()
-    const graded = submissions.filter((s) => s.status === "graded" && s.totalMarksAwarded !== null && s.totalMarksAwarded !== undefined)
+    const graded = submissions.filter(
+      (s) =>
+        s.status === "graded" && s.totalMarksAwarded !== null && s.totalMarksAwarded !== undefined
+    )
     const scores = graded.map((s) => (s.totalMarksAwarded! / s.maxMarks) * 100)
 
     const avgScore = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : 0
@@ -240,7 +251,10 @@ export const submissionRouter = router({
       if (!assignment) throw new TRPCError({ code: "FORBIDDEN", message: "Access denied" })
 
       if (input.totalMarksAwarded > submission.maxMarks) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: `Marks cannot exceed maximum (${submission.maxMarks})` })
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Marks cannot exceed maximum (${submission.maxMarks})`,
+        })
       }
 
       await Submission.findByIdAndUpdate(input.id, {

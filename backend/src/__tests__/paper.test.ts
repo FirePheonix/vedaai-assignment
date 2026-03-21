@@ -62,9 +62,9 @@ describe("paper.getById", () => {
   })
 
   it("throws NOT_FOUND for unknown id", async () => {
-    await expect(
-      caller.paper.getById({ id: "000000000000000000000000" })
-    ).rejects.toThrow("Paper not found")
+    await expect(caller.paper.getById({ id: "000000000000000000000000" })).rejects.toThrow(
+      "Paper not found"
+    )
   })
 })
 

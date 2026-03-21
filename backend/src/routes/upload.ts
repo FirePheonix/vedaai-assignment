@@ -15,13 +15,7 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter(_req, file, cb) {
-    const allowed = [
-      "application/pdf",
-      "text/plain",
-      "image/png",
-      "image/jpeg",
-      "image/webp",
-    ]
+    const allowed = ["application/pdf", "text/plain", "image/png", "image/jpeg", "image/webp"]
     cb(null, allowed.includes(file.mimetype))
   },
 })
@@ -82,7 +76,9 @@ router.post("/", upload.single("file"), async (req, res) => {
   }
 
   if (!req.file) {
-    res.status(400).json({ error: "No file or unsupported type. Send a PDF, image, or plain-text file." })
+    res
+      .status(400)
+      .json({ error: "No file or unsupported type. Send a PDF, image, or plain-text file." })
     return
   }
 
@@ -131,7 +127,10 @@ router.post("/submission", submissionUpload.single("file"), async (req, res) => 
     const fileUrl = await uploadBuffer(req.file.buffer, req.file.mimetype)
     const fileType = req.file.mimetype === "application/pdf" ? "pdf" : "image"
 
-    logger.info({ filename: req.file.originalname, bytes: req.file.size, fileType }, "Submission uploaded")
+    logger.info(
+      { filename: req.file.originalname, bytes: req.file.size, fileType },
+      "Submission uploaded"
+    )
 
     res.json({ fileUrl, filename: req.file.originalname, fileType })
   } catch (err) {

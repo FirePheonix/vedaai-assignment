@@ -119,7 +119,10 @@ export async function processGenerateJob(data: GenerateJobData, emit: Emitter) {
 
   await Assignment.findByIdAndUpdate(assignmentId, { status: "done", paperId: paper._id })
 
-  logger.info({ assignmentId, paperId: paper._id, chunksUsed: contextChunks.length }, "Paper generated")
+  logger.info(
+    { assignmentId, paperId: paper._id, chunksUsed: contextChunks.length },
+    "Paper generated"
+  )
   emit("job:done", { paperId: paper._id.toString() })
 
   return { paperId: paper._id.toString() }

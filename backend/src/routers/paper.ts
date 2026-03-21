@@ -32,7 +32,10 @@ export const paperRouter = router({
       throw new TRPCError({ code: "NOT_FOUND", message: "Paper not found" })
     }
 
-    const assignment = await Assignment.findOne({ _id: paper.assignmentId, userId: ctx.userId }).lean()
+    const assignment = await Assignment.findOne({
+      _id: paper.assignmentId,
+      userId: ctx.userId,
+    }).lean()
     if (!assignment) throw new TRPCError({ code: "FORBIDDEN", message: "Access denied" })
 
     return {
@@ -53,7 +56,10 @@ export const paperRouter = router({
   getByAssignmentId: protectedProcedure
     .input(z.object({ assignmentId: z.string() }))
     .query(async ({ input, ctx }) => {
-      const assignment = await Assignment.findOne({ _id: input.assignmentId, userId: ctx.userId }).lean()
+      const assignment = await Assignment.findOne({
+        _id: input.assignmentId,
+        userId: ctx.userId,
+      }).lean()
       if (!assignment) return null
 
       const paper = await QuestionPaper.findOne({ assignmentId: input.assignmentId }).lean()

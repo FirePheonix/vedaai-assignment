@@ -126,7 +126,13 @@ describe("processGenerateJob", () => {
     await processGenerateJob(jobData, emit)
 
     const steps = events.map((e) => e.event)
-    expect(steps).toEqual(["job:progress", "job:progress", "job:progress", "job:progress", "job:done"])
+    expect(steps).toEqual([
+      "job:progress",
+      "job:progress",
+      "job:progress",
+      "job:progress",
+      "job:done",
+    ])
 
     const progressSteps = events
       .filter((e) => e.event === "job:progress")
@@ -148,7 +154,7 @@ describe("processGenerateJob", () => {
           subject: "Biology",
           className: "8th",
           questionTypes: [{ type: "MCQ", count: 2, marks: 5 }],
-      sourceIds: [],
+          sourceIds: [],
         },
         emit
       )
@@ -166,7 +172,7 @@ describe("processGenerateJob", () => {
         subject: "Biology",
         className: "8th",
         questionTypes: [{ type: "MCQ", count: 2, marks: 5 }],
-      sourceIds: [],
+        sourceIds: [],
       },
       emit
     )

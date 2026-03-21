@@ -29,10 +29,11 @@ export default function StudentHomePage() {
   return (
     <div className="flex flex-col h-full bg-[#f2f4f7] md:bg-transparent overflow-hidden px-4 md:px-0 py-4 md:pr-4 pb-24 md:pb-4">
       <div className="flex-1 overflow-y-auto">
-
         {/* Greeting */}
         <div className="mb-6">
-          <p className="text-[13px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Student Dashboard</p>
+          <p className="text-[13px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">
+            Student Dashboard
+          </p>
           <h1 className="text-[22px] font-extrabold text-gray-900">Hey, {firstName} 👋</h1>
         </div>
 
@@ -87,16 +88,28 @@ export default function StudentHomePage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <p className="font-extrabold text-gray-900 text-[14px] leading-tight">{a.title}</p>
-                          <p className="text-gray-400 text-[12px] mt-0.5">{a.subject} · {a.className}</p>
+                          <p className="font-extrabold text-gray-900 text-[14px] leading-tight">
+                            {a.title}
+                          </p>
+                          <p className="text-gray-400 text-[12px] mt-0.5">
+                            {a.subject} · {a.className}
+                          </p>
                         </div>
-                        <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full shrink-0 ${color}`}>
+                        <span
+                          className={`text-[11px] font-bold px-2.5 py-1 rounded-full shrink-0 ${color}`}
+                        >
                           {label}
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5 mt-2 text-[12px] text-gray-400">
                         <Clock size={11} strokeWidth={2.5} />
-                        <span>Due {new Date(a.dueDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</span>
+                        <span>
+                          Due{" "}
+                          {new Date(a.dueDate).toLocaleDateString("en-GB", {
+                            day: "numeric",
+                            month: "short",
+                          })}
+                        </span>
                       </div>
                       {isGraded && (
                         <div className="flex items-center gap-1.5 mt-1.5 text-[12px] text-green-600 font-semibold">

@@ -2,7 +2,18 @@
 
 import { use, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Download, Sparkles, Pencil, Check, X, Plus, Trash2, Send, ChevronDown, Loader2 } from "lucide-react"
+import {
+  Download,
+  Sparkles,
+  Pencil,
+  Check,
+  X,
+  Plus,
+  Trash2,
+  Send,
+  ChevronDown,
+  Loader2,
+} from "lucide-react"
 import { useAssignmentStore } from "@/store/assignmentStore"
 import Header from "@/components/ui/Header"
 import { trpc } from "@/lib/trpc"
@@ -62,7 +73,10 @@ function EditableQuestion({
           className="flex-1 bg-white border border-gray-200 rounded-xl px-3 py-2 text-normal text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-200 resize-none"
           rows={2}
         />
-        <button onClick={onDelete} className="text-gray-300 hover:text-red-400 transition-colors mt-2 shrink-0">
+        <button
+          onClick={onDelete}
+          className="text-gray-300 hover:text-red-400 transition-colors mt-2 shrink-0"
+        >
           <Trash2 size={14} />
         </button>
       </div>
@@ -82,7 +96,9 @@ function EditableQuestion({
             type="number"
             min={1}
             value={question.marks}
-            onChange={(e) => onChange({ ...question, marks: Math.max(1, parseInt(e.target.value) || 1) })}
+            onChange={(e) =>
+              onChange({ ...question, marks: Math.max(1, parseInt(e.target.value) || 1) })
+            }
             className="w-14 bg-white border border-gray-200 rounded-xl px-2 py-1.5 text-xs text-gray-700 focus:outline-none text-center"
           />
         </div>
@@ -96,10 +112,11 @@ export default function PaperPage({ params }: { params: Promise<{ id: string }> 
   const router = useRouter()
   const { paper: storePaper, setJobStatus, setJobProgress } = useAssignmentStore()
 
-  const { data: fetchedPaper, isLoading, refetch } = trpc.paper.getById.useQuery(
-    { id },
-    { enabled: !storePaper }
-  )
+  const {
+    data: fetchedPaper,
+    isLoading,
+    refetch,
+  } = trpc.paper.getById.useQuery({ id }, { enabled: !storePaper })
 
   const paper = storePaper ?? fetchedPaper
 
@@ -141,19 +158,21 @@ export default function PaperPage({ params }: { params: Promise<{ id: string }> 
 
   const enterEdit = () => {
     if (!paper) return
-    setEditedSections(paper.sections.map((s) => ({
-      id: s.id,
-      title: s.title,
-      questionType: s.questionType,
-      instruction: s.instruction,
-      marksPerQuestion: s.marksPerQuestion,
-      questions: s.questions.map((q) => ({
-        id: q.id,
-        text: q.text,
-        difficulty: (q.difficulty ?? "Easy") as Difficulty,
-        marks: q.marks,
-      })),
-    })))
+    setEditedSections(
+      paper.sections.map((s) => ({
+        id: s.id,
+        title: s.title,
+        questionType: s.questionType,
+        instruction: s.instruction,
+        marksPerQuestion: s.marksPerQuestion,
+        questions: s.questions.map((q) => ({
+          id: q.id,
+          text: q.text,
+          difficulty: (q.difficulty ?? "Easy") as Difficulty,
+          marks: q.marks,
+        })),
+      }))
+    )
     setEditMode(true)
   }
 
@@ -180,7 +199,9 @@ export default function PaperPage({ params }: { params: Promise<{ id: string }> 
   const deleteQuestion = (sectionIdx: number, questionIdx: number) => {
     setEditedSections((prev) =>
       prev.map((s, si) =>
-        si !== sectionIdx ? s : { ...s, questions: s.questions.filter((_, qi) => qi !== questionIdx) }
+        si !== sectionIdx
+          ? s
+          : { ...s, questions: s.questions.filter((_, qi) => qi !== questionIdx) }
       )
     )
   }
@@ -225,7 +246,10 @@ export default function PaperPage({ params }: { params: Promise<{ id: string }> 
       <div className="flex-1 flex items-center justify-center bg-gray-50">
         <div className="text-center text-gray-400 text-sm">
           <p className="mb-3">No paper found.</p>
-          <button onClick={() => router.push("/create")} className="text-orange-500 hover:underline">
+          <button
+            onClick={() => router.push("/create")}
+            className="text-orange-500 hover:underline"
+          >
             Create a new assignment
           </button>
         </div>
@@ -249,8 +273,7 @@ export default function PaperPage({ params }: { params: Promise<{ id: string }> 
           {/* Banner */}
           <div className="px-5 py-6 md:px-10 md:py-8 md:pb-6 flex flex-col items-start gap-4">
             <p className="text-sidebar-item leading-relaxed text-white">
-              Here is your customized{" "}
-              <span className="font-extrabold">Question Paper</span> for{" "}
+              Here is your customized <span className="font-extrabold">Question Paper</span> for{" "}
               <span className="font-extrabold">{paper.subject || "your subject"}</span>:
             </p>
             <div className="flex items-center gap-3 flex-wrap">
@@ -267,7 +290,13 @@ export default function PaperPage({ params }: { params: Promise<{ id: string }> 
                     <Download size={14} strokeWidth={2.5} className="md:hidden block" />
                   </>
                 )}
-                {downloading ? "Generating…" : <>Download <span className="hidden md:inline">as PDF</span></>}
+                {downloading ? (
+                  "Generating…"
+                ) : (
+                  <>
+                    Download <span className="hidden md:inline">as PDF</span>
+                  </>
+                )}
               </button>
               <button
                 onClick={handleRegenerate}
@@ -277,8 +306,9 @@ export default function PaperPage({ params }: { params: Promise<{ id: string }> 
                 Regenerate
               </button>
               {/* Publish button — only when paper is done and not yet published */}
-              {!editMode && assignment?.status === "done" && (
-                publishedClassName || assignment?.isPublished ? (
+              {!editMode &&
+                assignment?.status === "done" &&
+                (publishedClassName || assignment?.isPublished ? (
                   <div className="flex items-center gap-2 bg-emerald-500/20 text-emerald-300 text-[14px] font-extrabold px-5 py-2.5 rounded-[20px]">
                     <Check size={15} strokeWidth={2.5} />
                     Published{publishedClassName ? ` to ${publishedClassName}` : ""}
@@ -296,13 +326,17 @@ export default function PaperPage({ params }: { params: Promise<{ id: string }> 
                     {showPublish && (
                       <div className="absolute top-full left-0 mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 p-2 min-w-50 z-50">
                         {classes.length === 0 ? (
-                          <p className="text-[12px] text-gray-400 px-3 py-2">No classes yet. Create one first.</p>
+                          <p className="text-[12px] text-gray-400 px-3 py-2">
+                            No classes yet. Create one first.
+                          </p>
                         ) : (
                           classes.map((cls) => (
                             <button
                               key={cls.id}
                               disabled={publishMutation.isPending}
-                              onClick={() => publishMutation.mutate({ id: paper.assignmentId, classId: cls.id })}
+                              onClick={() =>
+                                publishMutation.mutate({ id: paper.assignmentId, classId: cls.id })
+                              }
                               className="w-full text-left px-3 py-2 text-[13px] font-semibold text-gray-800 hover:bg-gray-50 rounded-xl transition-colors disabled:opacity-50"
                             >
                               {cls.name}
@@ -312,8 +346,7 @@ export default function PaperPage({ params }: { params: Promise<{ id: string }> 
                       </div>
                     )}
                   </div>
-                )
-              )}
+                ))}
 
               {!editMode ? (
                 <button
@@ -363,8 +396,12 @@ export default function PaperPage({ params }: { params: Promise<{ id: string }> 
 
               {/* Meta */}
               <div className="flex justify-between text-normal text-gray-900 mb-6 font-medium">
-                <span>Time Allowed: <span className="font-extrabold">{paper.timeAllowed}</span></span>
-                <span>Maximum Marks: <span className="font-extrabold">{paper.maximumMarks}</span></span>
+                <span>
+                  Time Allowed: <span className="font-extrabold">{paper.timeAllowed}</span>
+                </span>
+                <span>
+                  Maximum Marks: <span className="font-extrabold">{paper.maximumMarks}</span>
+                </span>
               </div>
 
               <p className="text-normal font-bold text-gray-900 mb-8">
@@ -389,11 +426,16 @@ export default function PaperPage({ params }: { params: Promise<{ id: string }> 
 
               {/* Sections */}
               {displaySections.map((section, si) => (
-                <div key={section.id} className={si < displaySections.length - 1 ? "mb-10" : "mb-4"}>
+                <div
+                  key={section.id}
+                  className={si < displaySections.length - 1 ? "mb-10" : "mb-4"}
+                >
                   <h2 className="text-center text-heading text-[20px] font-extrabold text-gray-900 mb-6">
                     {section.title}
                   </h2>
-                  <p className="text-normal font-extrabold text-gray-900 mb-1">{section.questionType}</p>
+                  <p className="text-normal font-extrabold text-gray-900 mb-1">
+                    {section.questionType}
+                  </p>
                   <p className="text-normal italic text-gray-600 mb-6">{section.instruction}</p>
 
                   <ol className="flex flex-col gap-4 text-normal font-medium text-gray-900">
@@ -420,7 +462,9 @@ export default function PaperPage({ params }: { params: Promise<{ id: string }> 
                   )}
 
                   {!editMode && si === displaySections.length - 1 && (
-                    <p className="text-normal font-extrabold text-gray-900 mt-8">End of Question Paper</p>
+                    <p className="text-normal font-extrabold text-gray-900 mt-8">
+                      End of Question Paper
+                    </p>
                   )}
                 </div>
               ))}
@@ -428,7 +472,9 @@ export default function PaperPage({ params }: { params: Promise<{ id: string }> 
               {/* Answer Key */}
               {!editMode && paper.answerKey && paper.answerKey.length > 0 && (
                 <div className="pt-8">
-                  <h2 className="text-[17.5px] font-extrabold text-gray-900 tracking-tight mb-5">Answer Key:</h2>
+                  <h2 className="text-[17.5px] font-extrabold text-gray-900 tracking-tight mb-5">
+                    Answer Key:
+                  </h2>
                   <ol className="flex flex-col gap-4 text-normal text-gray-800 pl-2">
                     {paper.answerKey.map((ak, i) => (
                       <li key={ak.questionId} className="flex items-start gap-3">

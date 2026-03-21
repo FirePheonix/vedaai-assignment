@@ -27,15 +27,11 @@ describe("assignment.create", () => {
   })
 
   it("rejects title shorter than 3 chars", async () => {
-    await expect(
-      caller.assignment.create({ ...validInput, title: "ab" })
-    ).rejects.toThrow()
+    await expect(caller.assignment.create({ ...validInput, title: "ab" })).rejects.toThrow()
   })
 
   it("rejects empty questionTypes", async () => {
-    await expect(
-      caller.assignment.create({ ...validInput, questionTypes: [] })
-    ).rejects.toThrow()
+    await expect(caller.assignment.create({ ...validInput, questionTypes: [] })).rejects.toThrow()
   })
 
   it("rejects question count less than 1", async () => {
@@ -88,8 +84,8 @@ describe("assignment.getById", () => {
   })
 
   it("throws NOT_FOUND for unknown id", async () => {
-    await expect(
-      caller.assignment.getById({ id: "000000000000000000000000" })
-    ).rejects.toThrow("Assignment not found")
+    await expect(caller.assignment.getById({ id: "000000000000000000000000" })).rejects.toThrow(
+      "Assignment not found"
+    )
   })
 })

@@ -59,8 +59,12 @@ export default function GradePage({ params }: { params: Promise<{ submissionId: 
           <ArrowLeft size={18} strokeWidth={2.5} />
         </button>
         <div className="flex-1 min-w-0">
-          <p className="font-extrabold text-gray-900 text-[14px] truncate">{submission.studentName}</p>
-          <p className="text-gray-400 text-[11px]">{submission.subject} · {submission.assignmentTitle}</p>
+          <p className="font-extrabold text-gray-900 text-[14px] truncate">
+            {submission.studentName}
+          </p>
+          <p className="text-gray-400 text-[11px]">
+            {submission.subject} · {submission.assignmentTitle}
+          </p>
         </div>
         {saved && (
           <div className="flex items-center gap-1.5 text-green-600 text-[12px] font-bold">
@@ -103,10 +107,16 @@ export default function GradePage({ params }: { params: Promise<{ submissionId: 
         {/* Grading panel — right */}
         <div className="md:w-80 shrink-0 bg-white border-t md:border-t-0 md:border-l border-gray-100 flex flex-col p-5 gap-5 overflow-y-auto">
           <div>
-            <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Submitted</p>
+            <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-1">
+              Submitted
+            </p>
             <p className="text-[13px] font-semibold text-gray-700">
               {new Date(submission.submittedAt).toLocaleDateString("en-GB", {
-                day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
               })}
             </p>
           </div>
@@ -151,9 +161,13 @@ export default function GradePage({ params }: { params: Promise<{ submissionId: 
             className="w-full bg-[#111] text-white font-extrabold text-[14px] py-3 rounded-[16px] hover:bg-gray-800 transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
           >
             {gradeMutation.isPending ? (
-              <><Loader2 size={14} className="animate-spin" /> Saving…</>
+              <>
+                <Loader2 size={14} className="animate-spin" /> Saving…
+              </>
             ) : saved ? (
-              <><CheckCircle size={14} strokeWidth={2.5} /> Grade Saved</>
+              <>
+                <CheckCircle size={14} strokeWidth={2.5} /> Grade Saved
+              </>
             ) : (
               "Save Grade"
             )}

@@ -11,7 +11,13 @@ export interface Context {
   userId: string | null
 }
 
-export async function createContext({ req, res }: { req: Request; res: Response }): Promise<Context> {
+export async function createContext({
+  req,
+  res,
+}: {
+  req: Request
+  res: Response
+}): Promise<Context> {
   let userId: string | null = null
 
   const authHeader = req.headers.authorization

@@ -42,9 +42,7 @@ export const assignmentRouter = router({
   }),
 
   list: protectedProcedure.query(async ({ ctx }) => {
-    const assignments = await Assignment.find({ userId: ctx.userId })
-      .sort({ createdAt: -1 })
-      .lean()
+    const assignments = await Assignment.find({ userId: ctx.userId }).sort({ createdAt: -1 }).lean()
 
     return assignments.map((a) => ({
       id: a._id.toString(),
@@ -114,7 +112,11 @@ export const assignmentRouter = router({
     .mutation(async ({ input, ctx }) => {
       const assignment = await Assignment.findOne({ _id: input.id, userId: ctx.userId })
       if (!assignment) throw new TRPCError({ code: "NOT_FOUND", message: "Assignment not found" })
-      if (assignment.status !== "done") throw new TRPCError({ code: "BAD_REQUEST", message: "Paper must be generated before publishing" })
+      if (assignment.status !== "done")
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Paper must be generated before publishing",
+        })
 
       const cls = await Class.findOne({ _id: input.classId, userId: ctx.userId }).lean()
       if (!cls) throw new TRPCError({ code: "NOT_FOUND", message: "Class not found" })
@@ -145,9 +147,7 @@ export const assignmentRouter = router({
       studentId: ctx.userId,
     }).lean()
 
-    const submissionMap = Object.fromEntries(
-      submissions.map((s) => [s.assignmentId.toString(), s])
-    )
+    const submissionMap = Object.fromEntries(submissions.map((s) => [s.assignmentId.toString(), s]))
 
     return assignments.map((a) => {
       const sub = submissionMap[a._id.toString()]

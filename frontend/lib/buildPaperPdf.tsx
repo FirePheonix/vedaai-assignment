@@ -1,11 +1,4 @@
-import {
-  Document,
-  Page,
-  Text,
-  View,
-  StyleSheet,
-  pdf,
-} from "@react-pdf/renderer"
+import { Document, Page, Text, View, StyleSheet, pdf } from "@react-pdf/renderer"
 import type { QuestionPaper } from "@/lib/schemas"
 
 const styles = StyleSheet.create({
@@ -134,20 +127,16 @@ function PaperDocument({ paper }: { paper: QuestionPaper }) {
         {/* Meta */}
         <View style={styles.metaRow}>
           <Text style={styles.metaItem}>
-            Time Allowed:{" "}
-            <Text style={styles.metaBold}>{paper.timeAllowed}</Text>
+            Time Allowed: <Text style={styles.metaBold}>{paper.timeAllowed}</Text>
           </Text>
           <Text style={styles.metaItem}>
-            Maximum Marks:{" "}
-            <Text style={styles.metaBold}>{paper.maximumMarks}</Text>
+            Maximum Marks: <Text style={styles.metaBold}>{paper.maximumMarks}</Text>
           </Text>
         </View>
 
         <View style={styles.divider} />
 
-        <Text style={styles.compulsory}>
-          All questions are compulsory unless stated otherwise.
-        </Text>
+        <Text style={styles.compulsory}>All questions are compulsory unless stated otherwise.</Text>
 
         {/* Student info */}
         <View style={styles.studentBlock}>
@@ -160,7 +149,7 @@ function PaperDocument({ paper }: { paper: QuestionPaper }) {
             <View style={styles.underline} />
           </View>
           <View style={styles.studentInfoRow}>
-            <Text>Class: {paper.className}  Section: </Text>
+            <Text>Class: {paper.className} Section: </Text>
             <View style={styles.underline} />
           </View>
         </View>

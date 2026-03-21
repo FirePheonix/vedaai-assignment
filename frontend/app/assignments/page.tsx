@@ -34,7 +34,9 @@ function AssignmentCard({
     >
       {/* Title row */}
       <div className="flex items-start justify-between">
-        <h3 className="text-heading text-[18px] md:text-heading text-gray-900 line-clamp-2 pr-4">{title}</h3>
+        <h3 className="text-heading text-[18px] md:text-heading text-gray-900 line-clamp-2 pr-4">
+          {title}
+        </h3>
         <div className="relative shrink-0">
           <button
             onClick={(e) => {
@@ -94,9 +96,7 @@ export default function AssignmentsPage() {
   const [search, setSearch] = useState("")
   const { data: assignments = [] } = trpc.assignment.list.useQuery()
 
-  const filtered = assignments.filter((a) =>
-    a.title.toLowerCase().includes(search.toLowerCase())
-  )
+  const filtered = assignments.filter((a) => a.title.toLowerCase().includes(search.toLowerCase()))
 
   return (
     <>
@@ -105,8 +105,24 @@ export default function AssignmentsPage() {
       <main className="flex-1 overflow-y-auto px-5 md:px-8 py-4 md:py-7 relative h-[calc(100vh-70px)] md:h-full">
         {/* On Mobile, visual style is exactly as the screenshot: the back arrow, then text */}
         <div className="md:hidden flex items-center justify-center relative mb-8">
-          <button type="button" onClick={() => router.back()} className="absolute left-0 w-10 h-10 bg-gray-200/50 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-800"><path d="m15 18-6-6 6-6"/></svg>
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="absolute left-0 w-10 h-10 bg-gray-200/50 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-gray-800"
+            >
+              <path d="m15 18-6-6 6-6" />
+            </svg>
           </button>
           <h1 className="text-heading text-[16px] text-gray-900 font-extrabold">Assignments</h1>
         </div>

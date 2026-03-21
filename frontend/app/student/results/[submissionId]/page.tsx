@@ -5,7 +5,11 @@ import { useRouter } from "next/navigation"
 import { CheckCircle, Clock, MessageSquare, ArrowLeft, Loader2 } from "lucide-react"
 import { trpc } from "@/lib/trpc"
 
-export default function StudentResultsPage({ params }: { params: Promise<{ submissionId: string }> }) {
+export default function StudentResultsPage({
+  params,
+}: {
+  params: Promise<{ submissionId: string }>
+}) {
   const { submissionId } = use(params)
   const router = useRouter()
 
@@ -28,14 +32,14 @@ export default function StudentResultsPage({ params }: { params: Promise<{ submi
   }
 
   const isPending = submission.status !== "graded"
-  const percent = submission.totalMarksAwarded != null
-    ? Math.round((submission.totalMarksAwarded / submission.maxMarks) * 100)
-    : null
+  const percent =
+    submission.totalMarksAwarded != null
+      ? Math.round((submission.totalMarksAwarded / submission.maxMarks) * 100)
+      : null
 
   return (
     <div className="flex flex-col h-full bg-[#f2f4f7] md:bg-transparent overflow-hidden px-4 md:px-0 py-4 md:pr-4 pb-24 md:pb-4">
       <div className="flex-1 overflow-y-auto max-w-lg mx-auto w-full">
-
         <button
           onClick={() => router.push("/student/home")}
           className="flex items-center gap-2 text-gray-400 hover:text-gray-700 transition-colors text-[13px] font-semibold mb-5"
@@ -45,8 +49,12 @@ export default function StudentResultsPage({ params }: { params: Promise<{ submi
         </button>
 
         <div className="bg-white rounded-[28px] p-6 shadow-sm mb-4">
-          <p className="text-[12px] font-semibold text-gray-400 uppercase tracking-wide mb-1">{submission.subject}</p>
-          <h1 className="text-[19px] font-extrabold text-gray-900 mb-4">{submission.assignmentTitle}</h1>
+          <p className="text-[12px] font-semibold text-gray-400 uppercase tracking-wide mb-1">
+            {submission.subject}
+          </p>
+          <h1 className="text-[19px] font-extrabold text-gray-900 mb-4">
+            {submission.assignmentTitle}
+          </h1>
 
           {isPending ? (
             <div className="flex flex-col items-center py-8 text-center">
@@ -62,17 +70,31 @@ export default function StudentResultsPage({ params }: { params: Promise<{ submi
                 <div className="text-center">
                   <div className="text-[52px] font-extrabold text-gray-900 leading-none">
                     {submission.totalMarksAwarded}
-                    <span className="text-[24px] font-medium text-gray-400">/{submission.maxMarks}</span>
+                    <span className="text-[24px] font-medium text-gray-400">
+                      /{submission.maxMarks}
+                    </span>
                   </div>
-                  <p className="text-[14px] font-semibold text-gray-500 mt-1">{percent}% · {
-                    percent! >= 80 ? "Excellent" : percent! >= 60 ? "Good" : percent! >= 40 ? "Needs improvement" : "Below average"
-                  }</p>
+                  <p className="text-[14px] font-semibold text-gray-500 mt-1">
+                    {percent}% ·{" "}
+                    {percent! >= 80
+                      ? "Excellent"
+                      : percent! >= 60
+                        ? "Good"
+                        : percent! >= 40
+                          ? "Needs improvement"
+                          : "Below average"}
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-2 text-[12px] text-green-600 font-semibold bg-green-50 rounded-xl px-3 py-2 w-fit">
                 <CheckCircle size={12} strokeWidth={2.5} />
-                Graded on {new Date(submission.gradedAt!).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                Graded on{" "}
+                {new Date(submission.gradedAt!).toLocaleDateString("en-GB", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })}
               </div>
             </>
           )}
@@ -84,7 +106,9 @@ export default function StudentResultsPage({ params }: { params: Promise<{ submi
               <MessageSquare size={15} className="text-gray-400" strokeWidth={2} />
               <p className="text-[13px] font-extrabold text-gray-700">Teacher&apos;s Feedback</p>
             </div>
-            <p className="text-[14px] text-gray-700 leading-relaxed whitespace-pre-wrap">{submission.feedback}</p>
+            <p className="text-[14px] text-gray-700 leading-relaxed whitespace-pre-wrap">
+              {submission.feedback}
+            </p>
           </div>
         )}
       </div>

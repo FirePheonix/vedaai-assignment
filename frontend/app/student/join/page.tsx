@@ -29,7 +29,9 @@ export default function JoinClassPage() {
             <CheckCircle size={32} className="text-green-500" strokeWidth={2} />
           </div>
           <h2 className="text-[22px] font-extrabold text-gray-900 mb-1">Joined!</h2>
-          <p className="text-gray-500 text-[15px] mb-6">You&apos;re now in <span className="font-bold text-gray-800">{joined.className}</span></p>
+          <p className="text-gray-500 text-[15px] mb-6">
+            You&apos;re now in <span className="font-bold text-gray-800">{joined.className}</span>
+          </p>
           <div className="flex flex-col gap-3 items-center">
             <button
               onClick={() => router.push("/student/home")}
@@ -38,7 +40,11 @@ export default function JoinClassPage() {
               Go to Dashboard
             </button>
             <button
-              onClick={() => { setJoined(null); setCode(""); joinMutation.reset() }}
+              onClick={() => {
+                setJoined(null)
+                setCode("")
+                joinMutation.reset()
+              }}
               className="text-orange-500 font-semibold text-[14px] hover:underline"
             >
               Join another class
@@ -57,7 +63,9 @@ export default function JoinClassPage() {
             <Hash size={26} className="text-orange-500" strokeWidth={2.5} />
           </div>
           <h1 className="text-[24px] font-extrabold text-gray-900 tracking-tight">Join a Class</h1>
-          <p className="text-gray-400 text-[14px] mt-1">Ask your teacher for the 6-character class code</p>
+          <p className="text-gray-400 text-[14px] mt-1">
+            Ask your teacher for the 6-character class code
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-[24px] p-6 shadow-sm">
@@ -81,13 +89,22 @@ export default function JoinClassPage() {
             disabled={code.trim().length < 4 || joinMutation.isPending}
             className="mt-4 w-full bg-[#111] text-white font-extrabold text-[15px] py-3.5 rounded-[18px] hover:bg-gray-800 transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
           >
-            {joinMutation.isPending ? <><Loader2 size={16} className="animate-spin" /> Joining…</> : "Join Class"}
+            {joinMutation.isPending ? (
+              <>
+                <Loader2 size={16} className="animate-spin" /> Joining…
+              </>
+            ) : (
+              "Join Class"
+            )}
           </button>
         </form>
 
         <p className="text-center mt-4 text-[13px] text-gray-400">
           Already joined?{" "}
-          <button onClick={() => router.push("/student/home")} className="text-orange-500 font-semibold hover:underline">
+          <button
+            onClick={() => router.push("/student/home")}
+            className="text-orange-500 font-semibold hover:underline"
+          >
             Go to dashboard
           </button>
         </p>

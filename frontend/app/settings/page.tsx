@@ -3,8 +3,15 @@
 import { useState, useRef } from "react"
 import { useClerk, useUser } from "@clerk/nextjs"
 import {
-  Camera, Check, Loader2, Shield, Bell, LogOut,
-  ArrowLeftRight, AlertTriangle, X,
+  Camera,
+  Check,
+  Loader2,
+  Shield,
+  Bell,
+  LogOut,
+  ArrowLeftRight,
+  AlertTriangle,
+  X,
 } from "lucide-react"
 import Image from "next/image"
 import Header from "@/components/ui/Header"
@@ -62,9 +69,10 @@ function SwitchRoleModal({
   loading: boolean
 }) {
   const targetRole = currentRole === "teacher" ? "Student" : "Teacher"
-  const warn = currentRole === "teacher"
-    ? "You'll lose access to paper creation, classes, and the library."
-    : "You'll gain access to create and manage question papers."
+  const warn =
+    currentRole === "teacher"
+      ? "You'll lose access to paper creation, classes, and the library."
+      : "You'll gain access to create and manage question papers."
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -72,9 +80,7 @@ function SwitchRoleModal({
         <div className="w-12 h-12 rounded-2xl bg-orange-100 flex items-center justify-center mb-4">
           <AlertTriangle size={22} className="text-orange-500" strokeWidth={2.5} />
         </div>
-        <h2 className="text-[18px] font-extrabold text-gray-900 mb-2">
-          Switch to {targetRole}?
-        </h2>
+        <h2 className="text-[18px] font-extrabold text-gray-900 mb-2">Switch to {targetRole}?</h2>
         <p className="text-[13px] text-gray-500 leading-relaxed mb-6">{warn}</p>
         <div className="flex gap-3">
           <button
@@ -105,7 +111,8 @@ export default function SettingsPage() {
   const { session, signOut } = useClerk()
   const { data: profile } = trpc.user.getMe.useQuery()
 
-  const role = (user?.publicMetadata as Record<string, string> | undefined)?.role ?? profile?.role ?? null
+  const role =
+    (user?.publicMetadata as Record<string, string> | undefined)?.role ?? profile?.role ?? null
   const isTeacher = role === "teacher"
 
   /* profile pic */
@@ -191,7 +198,6 @@ export default function SettingsPage() {
       <Header breadcrumb="Settings" showBack={false} />
 
       <main className="flex-1 overflow-y-auto px-5 md:px-8 py-4 md:py-7 h-[calc(100vh-70px)] md:h-full pb-40">
-
         {/* Mobile title */}
         <div className="md:hidden flex items-center justify-center relative mb-8">
           <h1 className="text-[16px] text-gray-900 font-extrabold">Settings</h1>
@@ -203,14 +209,14 @@ export default function SettingsPage() {
             <span className="w-2.5 h-2.5 rounded-full bg-gray-400 inline-block" />
             <h1 className="text-heading text-gray-900 mt-1">Settings</h1>
           </div>
-          <p className="text-normal text-gray-400 ml-4 mt-1.5">Manage your profile and preferences.</p>
+          <p className="text-normal text-gray-400 ml-4 mt-1.5">
+            Manage your profile and preferences.
+          </p>
         </div>
 
         <div className="max-w-xl mx-auto md:mx-0 flex flex-col gap-5">
-
           {/* ── Profile card ── */}
           <div className="bg-white rounded-[28px] border border-gray-100/30 shadow-[0_2px_12px_rgba(0,0,0,0.02)] p-6 flex flex-col gap-5">
-
             {/* Avatar + role badge */}
             <div className="flex items-center gap-4">
               <div className="relative shrink-0">
@@ -232,10 +238,11 @@ export default function SettingsPage() {
                   disabled={uploadingPhoto}
                   className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#111] flex items-center justify-center border-2 border-white shadow hover:bg-gray-800 transition-colors disabled:opacity-60"
                 >
-                  {uploadingPhoto
-                    ? <Loader2 size={12} className="animate-spin text-white" />
-                    : <Camera size={12} className="text-white" strokeWidth={2.5} />
-                  }
+                  {uploadingPhoto ? (
+                    <Loader2 size={12} className="animate-spin text-white" />
+                  ) : (
+                    <Camera size={12} className="text-white" strokeWidth={2.5} />
+                  )}
                 </button>
                 <input
                   ref={fileRef}
@@ -249,12 +256,14 @@ export default function SettingsPage() {
                 <p className="font-extrabold text-gray-900 text-[16px] truncate">
                   {user?.fullName || user?.firstName || "Your Name"}
                 </p>
-                <p className="text-[12px] text-gray-400 truncate">{user?.primaryEmailAddress?.emailAddress}</p>
-                <span className={`inline-block mt-1.5 px-3 py-0.5 rounded-full text-[11px] font-bold ${
-                  isTeacher
-                    ? "bg-orange-100 text-orange-600"
-                    : "bg-blue-100 text-blue-600"
-                }`}>
+                <p className="text-[12px] text-gray-400 truncate">
+                  {user?.primaryEmailAddress?.emailAddress}
+                </p>
+                <span
+                  className={`inline-block mt-1.5 px-3 py-0.5 rounded-full text-[11px] font-bold ${
+                    isTeacher ? "bg-orange-100 text-orange-600" : "bg-blue-100 text-blue-600"
+                  }`}
+                >
                   {isTeacher ? "Teacher" : "Student"}
                 </span>
               </div>
@@ -324,9 +333,13 @@ export default function SettingsPage() {
               }`}
             >
               {updateProfile.isPending ? (
-                <><Loader2 size={15} className="animate-spin" /> Saving…</>
+                <>
+                  <Loader2 size={15} className="animate-spin" /> Saving…
+                </>
               ) : profileSaved ? (
-                <><Check size={15} strokeWidth={2.5} /> Saved</>
+                <>
+                  <Check size={15} strokeWidth={2.5} /> Saved
+                </>
               ) : (
                 "Save Changes"
               )}
@@ -337,9 +350,17 @@ export default function SettingsPage() {
           <div>
             <SectionLabel>Notifications</SectionLabel>
             <div className="bg-white rounded-[28px] border border-gray-100/30 shadow-[0_2px_12px_rgba(0,0,0,0.02)] overflow-hidden divide-y divide-gray-50">
-              <Toggle label="Email Notifications" description="Get notified when a paper is ready" defaultOn />
+              <Toggle
+                label="Email Notifications"
+                description="Get notified when a paper is ready"
+                defaultOn
+              />
               <Toggle label="Push Notifications" description="Browser alerts for job updates" />
-              <Toggle label="Weekly Summary" description="Weekly digest of your activity" defaultOn />
+              <Toggle
+                label="Weekly Summary"
+                description="Weekly digest of your activity"
+                defaultOn
+              />
             </div>
           </div>
 
@@ -347,7 +368,6 @@ export default function SettingsPage() {
           <div>
             <SectionLabel>Account</SectionLabel>
             <div className="bg-white rounded-[28px] border border-gray-100/30 shadow-[0_2px_12px_rgba(0,0,0,0.02)] overflow-hidden divide-y divide-gray-50">
-
               {/* Switch role */}
               <button
                 onClick={() => setShowSwitch(true)}
@@ -359,7 +379,8 @@ export default function SettingsPage() {
                 <div className="flex-1 min-w-0">
                   <p className="text-[14px] font-semibold text-gray-900">Switch Role</p>
                   <p className="text-[12px] text-gray-400 mt-0.5">
-                    Currently <span className="font-bold">{isTeacher ? "Teacher" : "Student"}</span> · tap to switch to {isTeacher ? "Student" : "Teacher"}
+                    Currently <span className="font-bold">{isTeacher ? "Teacher" : "Student"}</span>{" "}
+                    · tap to switch to {isTeacher ? "Student" : "Teacher"}
                   </p>
                 </div>
                 <ArrowLeftRight size={14} className="text-gray-300 shrink-0" strokeWidth={2} />

@@ -19,7 +19,13 @@ export default function ClassesPage() {
   }
 
   const { data: classes = [], refetch } = trpc.class.list.useQuery()
-  const createMutation = trpc.class.create.useMutation({ onSuccess: () => { setName(""); setShowForm(false); refetch() } })
+  const createMutation = trpc.class.create.useMutation({
+    onSuccess: () => {
+      setName("")
+      setShowForm(false)
+      refetch()
+    },
+  })
   const deleteMutation = trpc.class.delete.useMutation({ onSuccess: () => refetch() })
 
   const handleCreate = (e: React.FormEvent) => {
@@ -34,8 +40,24 @@ export default function ClassesPage() {
       <main className="flex-1 overflow-y-auto px-5 md:px-8 py-4 md:py-7 h-[calc(100vh-70px)] md:h-full">
         {/* Mobile title */}
         <div className="md:hidden flex items-center justify-center relative mb-8">
-          <button type="button" onClick={() => router.back()} className="absolute left-0 w-10 h-10 bg-gray-200/50 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-800"><path d="m15 18-6-6 6-6"/></svg>
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="absolute left-0 w-10 h-10 bg-gray-200/50 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-gray-800"
+            >
+              <path d="m15 18-6-6 6-6" />
+            </svg>
           </button>
           <h1 className="text-heading text-[16px] text-gray-900 font-extrabold">My Classes</h1>
         </div>
@@ -47,7 +69,9 @@ export default function ClassesPage() {
               <span className="w-2.5 h-2.5 rounded-full bg-violet-400 inline-block shadow-[0_0_8px_rgba(167,139,250,0.8)]" />
               <h1 className="text-heading text-gray-900 mt-1">My Classes</h1>
             </div>
-            <p className="text-normal text-gray-400 ml-4 mt-1.5">Manage your class groups for quick assignment creation.</p>
+            <p className="text-normal text-gray-400 ml-4 mt-1.5">
+              Manage your class groups for quick assignment creation.
+            </p>
           </div>
           <button
             onClick={() => setShowForm(true)}
@@ -63,7 +87,13 @@ export default function ClassesPage() {
           <div className="mb-6 bg-white rounded-[28px] p-6 border border-gray-100/50 shadow-sm mx-0 md:mx-1">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sidebar-item font-extrabold text-gray-900">New Class</h3>
-              <button onClick={() => { setShowForm(false); setName("") }} className="text-gray-300 hover:text-gray-500">
+              <button
+                onClick={() => {
+                  setShowForm(false)
+                  setName("")
+                }}
+                className="text-gray-300 hover:text-gray-500"
+              >
                 <X size={18} />
               </button>
             </div>
@@ -89,7 +119,10 @@ export default function ClassesPage() {
         {/* Classes grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 px-1 pb-40">
           {classes.map((cls) => (
-            <div key={cls.id} className="bg-white rounded-[28px] p-6 border border-gray-100/30 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col gap-4 group hover:border-violet-200 hover:shadow-md transition-all">
+            <div
+              key={cls.id}
+              className="bg-white rounded-[28px] p-6 border border-gray-100/30 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col gap-4 group hover:border-violet-200 hover:shadow-md transition-all"
+            >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-2xl bg-violet-50 flex items-center justify-center shrink-0">
@@ -113,17 +146,27 @@ export default function ClassesPage() {
               {/* Join code row */}
               <div className="flex items-center justify-between bg-gray-50 rounded-2xl px-4 py-2.5">
                 <div>
-                  <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Class Code</p>
-                  <p className="text-[18px] font-extrabold tracking-[0.18em] text-gray-900 font-mono">{cls.joinCode}</p>
+                  <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">
+                    Class Code
+                  </p>
+                  <p className="text-[18px] font-extrabold tracking-[0.18em] text-gray-900 font-mono">
+                    {cls.joinCode}
+                  </p>
                 </div>
                 <button
                   onClick={() => copyCode(cls.id, cls.joinCode)}
                   className="flex items-center gap-1.5 text-[12px] font-bold text-violet-500 hover:text-violet-700 transition-colors"
                 >
                   {copiedId === cls.id ? (
-                    <><Check size={13} strokeWidth={2.5} />Copied!</>
+                    <>
+                      <Check size={13} strokeWidth={2.5} />
+                      Copied!
+                    </>
                   ) : (
-                    <><Copy size={13} strokeWidth={2.5} />Copy</>
+                    <>
+                      <Copy size={13} strokeWidth={2.5} />
+                      Copy
+                    </>
                   )}
                 </button>
               </div>
