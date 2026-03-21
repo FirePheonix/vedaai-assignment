@@ -5,6 +5,7 @@ import OpenAI from "openai"
 import { verifyToken } from "@clerk/backend"
 import { logger } from "@/lib/logger"
 import { storeChunks } from "@/lib/embed"
+import { uploadBuffer } from "@/lib/cloudinary"
 import { env } from "@/env"
 
 const router = express.Router()
@@ -21,6 +22,15 @@ const upload = multer({
       "image/jpeg",
       "image/webp",
     ]
+    cb(null, allowed.includes(file.mimetype))
+  },
+})
+
+const submissionUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 20 * 1024 * 1024 },
+  fileFilter(_req, file, cb) {
+    const allowed = ["application/pdf", "image/png", "image/jpeg", "image/webp"]
     cb(null, allowed.includes(file.mimetype))
   },
 })
@@ -95,6 +105,38 @@ router.post("/", upload.single("file"), async (req, res) => {
   } catch (err) {
     logger.error({ err }, "File upload failed")
     res.status(500).json({ error: "Failed to process file." })
+  }
+})
+
+// Student submission upload — stores file on Cloudinary, returns fileUrl
+router.post("/submission", submissionUpload.single("file"), async (req, res) => {
+  const authHeader = req.headers.authorization
+  if (!authHeader?.startsWith("Bearer ")) {
+    res.status(401).json({ error: "Unauthorized" })
+    return
+  }
+  try {
+    await verifyToken(authHeader.slice(7), { secretKey: env.CLERK_SECRET_KEY })
+  } catch {
+    res.status(401).json({ error: "Invalid token" })
+    return
+  }
+
+  if (!req.file) {
+    res.status(400).json({ error: "No file or unsupported type. Send a PDF or image." })
+    return
+  }
+
+  try {
+    const fileUrl = await uploadBuffer(req.file.buffer, req.file.mimetype)
+    const fileType = req.file.mimetype === "application/pdf" ? "pdf" : "image"
+
+    logger.info({ filename: req.file.originalname, bytes: req.file.size, fileType }, "Submission uploaded")
+
+    res.json({ fileUrl, filename: req.file.originalname, fileType })
+  } catch (err) {
+    logger.error({ err }, "Submission upload failed")
+    res.status(500).json({ error: "Failed to upload file." })
   }
 })
 

@@ -5,7 +5,7 @@ import { QuestionPaper } from "@/models/QuestionPaper"
 import { setupDB, teardownDB, clearDB } from "@/__tests__/helpers"
 import type { GenerateJobData } from "@/lib/queue"
 
-const { mockCreate, mockPaperResponse } = vi.hoisted(() => {
+const { mockCreate } = vi.hoisted(() => {
   const mockPaperResponse = {
     schoolName: "Delhi Public School",
     className: "8th",

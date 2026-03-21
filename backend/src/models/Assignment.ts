@@ -18,6 +18,8 @@ export interface IAssignment extends Document {
   jobId?: string
   status: "pending" | "queued" | "processing" | "done" | "failed"
   paperId?: Types.ObjectId
+  classId?: string
+  isPublished: boolean
   createdAt: Date
   updatedAt: Date
 }
@@ -45,6 +47,8 @@ const AssignmentSchema = new Schema<IAssignment>(
       default: "pending",
     },
     paperId: { type: Schema.Types.ObjectId, ref: "QuestionPaper" },
+    classId: { type: String },
+    isPublished: { type: Boolean, default: false },
   },
   { timestamps: true }
 )

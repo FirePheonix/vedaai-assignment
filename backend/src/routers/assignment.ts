@@ -1,6 +1,8 @@
 import { z } from "zod"
-import { router, protectedProcedure, TRPCError } from "../trpc"
+import { router, protectedProcedure, teacherProcedure, studentProcedure, TRPCError } from "../trpc"
 import { Assignment } from "../models/Assignment"
+import { Class } from "../models/Class"
+import { Submission } from "../models/Submission"
 import { assignmentQueue } from "../lib/queue"
 import { logger } from "../lib/logger"
 
@@ -102,6 +104,63 @@ export const assignmentRouter = router({
       status: assignment.status,
       jobId: assignment.jobId ?? null,
       paperId: assignment.paperId?.toString() ?? null,
+      classId: assignment.classId ?? null,
+      isPublished: assignment.isPublished,
     }
+  }),
+
+  publish: teacherProcedure
+    .input(z.object({ id: z.string(), classId: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      const assignment = await Assignment.findOne({ _id: input.id, userId: ctx.userId })
+      if (!assignment) throw new TRPCError({ code: "NOT_FOUND", message: "Assignment not found" })
+      if (assignment.status !== "done") throw new TRPCError({ code: "BAD_REQUEST", message: "Paper must be generated before publishing" })
+
+      const cls = await Class.findOne({ _id: input.classId, userId: ctx.userId }).lean()
+      if (!cls) throw new TRPCError({ code: "NOT_FOUND", message: "Class not found" })
+
+      await Assignment.findByIdAndUpdate(input.id, { isPublished: true, classId: input.classId })
+      return { success: true, className: cls.name }
+    }),
+
+  listForStudent: studentProcedure.query(async ({ ctx }) => {
+    // Find all classes this student is enrolled in
+    const classes = await Class.find({ studentIds: ctx.userId }).lean()
+    if (classes.length === 0) return []
+
+    const classIds = classes.map((c) => c._id.toString())
+    const classMap = Object.fromEntries(classes.map((c) => [c._id.toString(), c.name]))
+
+    const assignments = await Assignment.find({
+      classId: { $in: classIds },
+      isPublished: true,
+    })
+      .sort({ createdAt: -1 })
+      .lean()
+
+    // Check which assignments this student has already submitted
+    const assignmentIds = assignments.map((a) => a._id.toString())
+    const submissions = await Submission.find({
+      assignmentId: { $in: assignmentIds },
+      studentId: ctx.userId,
+    }).lean()
+
+    const submissionMap = Object.fromEntries(
+      submissions.map((s) => [s.assignmentId.toString(), s])
+    )
+
+    return assignments.map((a) => {
+      const sub = submissionMap[a._id.toString()]
+      return {
+        id: a._id.toString(),
+        title: a.title,
+        subject: a.subject,
+        dueDate: a.dueDate.toISOString(),
+        className: classMap[a.classId!] ?? "",
+        paperId: a.paperId?.toString() ?? null,
+        submissionStatus: sub ? sub.status : null,
+        submissionId: sub ? sub._id.toString() : null,
+      }
+    })
   }),
 })

@@ -3,6 +3,7 @@ import type { Request, Response } from "express"
 import { ZodError } from "zod"
 import { verifyToken } from "@clerk/backend"
 import { env } from "@/env"
+import { User } from "@/models/User"
 
 export interface Context {
   req: Request
@@ -47,6 +48,22 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
     throw new TRPCError({ code: "UNAUTHORIZED" })
   }
   return next({ ctx: { ...ctx, userId: ctx.userId } })
+})
+
+export const teacherProcedure = protectedProcedure.use(async ({ ctx, next }) => {
+  const user = await User.findOne({ clerkId: ctx.userId }).lean()
+  if (!user || user.role !== "teacher") {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Teachers only" })
+  }
+  return next({ ctx: { ...ctx, user } })
+})
+
+export const studentProcedure = protectedProcedure.use(async ({ ctx, next }) => {
+  const user = await User.findOne({ clerkId: ctx.userId }).lean()
+  if (!user || user.role !== "student") {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Students only" })
+  }
+  return next({ ctx: { ...ctx, user } })
 })
 
 export const createCallerFactory = t.createCallerFactory

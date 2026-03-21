@@ -16,6 +16,7 @@ import { env } from "./env"
 import { assignmentQueue } from "./lib/queue"
 import { startWorker } from "./workers/generateWorker"
 import { uploadRouter } from "./routes/upload"
+import { webhookRouter } from "./routes/webhook"
 
 const app = express()
 const httpServer = http.createServer(app)
@@ -28,6 +29,10 @@ export const io = new SocketIOServer(httpServer, {
 })
 
 app.use(cors({ origin: env.FRONTEND_URL, credentials: true }))
+
+// Webhook must be mounted before express.json() — Svix needs raw body
+app.use("/webhook", webhookRouter)
+
 app.use(express.json({ limit: "10mb" }))
 
 app.get("/health", (_req, res) => {
