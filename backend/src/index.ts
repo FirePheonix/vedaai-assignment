@@ -55,23 +55,50 @@ app.use(
   createExpressMiddleware({
     router: appRouter,
     createContext,
-    onError({ path, error }) {
-      logger.error({ path, err: error }, "tRPC error")
+    onError({ path, error, req }) {
+      logger.error(
+        {
+          path,
+          code: error.code,
+          message: error.message,
+          stack: error.stack,
+          cause: error.cause,
+          method: req.method,
+        },
+        "tRPC error"
+      )
     },
   })
 )
 
+io.engine.on("connection_error", (err) => {
+  logger.error({ code: err.code, message: err.message, context: err.context }, "Socket.IO connection error")
+})
+
 io.on("connection", (socket) => {
-  logger.debug({ socketId: socket.id }, "Client connected")
+  logger.info({ socketId: socket.id, transport: socket.conn.transport.name }, "Client connected")
+
+  socket.conn.on("upgrade", (transport) => {
+    logger.info({ socketId: socket.id, transport: transport.name }, "Socket transport upgraded")
+  })
 
   socket.on("join:job", (jobId: string) => {
     socket.join(jobId)
-    logger.debug({ socketId: socket.id, jobId }, "Client joined job room")
+    logger.info({ socketId: socket.id, jobId }, "Client joined job room")
   })
 
-  socket.on("disconnect", () => {
-    logger.debug({ socketId: socket.id }, "Client disconnected")
+  socket.on("disconnect", (reason) => {
+    logger.info({ socketId: socket.id, reason }, "Client disconnected")
   })
+})
+
+process.on("unhandledRejection", (reason) => {
+  logger.error({ reason }, "Unhandled promise rejection")
+})
+
+process.on("uncaughtException", (err) => {
+  logger.error({ err }, "Uncaught exception")
+  process.exit(1)
 })
 
 async function start() {
