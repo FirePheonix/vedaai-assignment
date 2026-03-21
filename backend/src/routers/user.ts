@@ -20,6 +20,38 @@ export const userRouter = router({
     }
   }),
 
+  updateProfile: protectedProcedure
+    .input(
+      z.object({
+        firstName: z.string().min(1).max(60).optional(),
+        lastName: z.string().max(60).optional(),
+        schoolName: z.string().max(100).optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const name = [input.firstName, input.lastName].filter(Boolean).join(" ").trim()
+
+      await User.findOneAndUpdate(
+        { clerkId: ctx.userId },
+        {
+          $set: {
+            ...(name ? { name } : {}),
+            ...(input.schoolName !== undefined ? { schoolName: input.schoolName } : {}),
+          },
+        },
+        { upsert: true }
+      )
+
+      if (input.firstName || input.lastName !== undefined) {
+        await clerk.users.updateUser(ctx.userId, {
+          ...(input.firstName ? { firstName: input.firstName } : {}),
+          ...(input.lastName !== undefined ? { lastName: input.lastName } : {}),
+        })
+      }
+
+      return { success: true }
+    }),
+
   setRole: protectedProcedure
     .input(
       z.object({

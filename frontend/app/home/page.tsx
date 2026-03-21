@@ -19,6 +19,7 @@ function StatCard({ label, value }: { label: string; value: string | number }) {
 export default function HomePage() {
   const { user } = useUser()
   const { data: assignments = [] } = trpc.assignment.list.useQuery()
+  const { data: analytics } = trpc.submission.getTeacherAnalytics.useQuery()
   const router = useRouter()
 
   const totalAssignments = assignments.length
@@ -26,8 +27,13 @@ export default function HomePage() {
   const pending = assignments.filter((a) => ["pending", "queued", "processing"].includes(a.status)).length
   const timeSaved = Math.round((papersGenerated * 15) / 60 * 10) / 10
 
-  const gaugeMax = Math.max(totalAssignments, 1)
-  const gaugeVal = papersGenerated
+  const gradedTotal = analytics?.gradedCount ?? 0
+  const gradedThisWeek = analytics?.gradedThisWeek ?? 0
+  const totalSubmissions = analytics?.totalSubmissions ?? 0
+
+  // Gauge: graded this week vs total submissions (or papers generated as fallback)
+  const gaugeMax = Math.max(totalSubmissions || totalAssignments, 1)
+  const gaugeVal = gradedThisWeek || papersGenerated
   const gaugeFraction = gaugeVal / gaugeMax
   const arcLen = 141.37
   const dashOffset = arcLen * (1 - gaugeFraction)
@@ -86,7 +92,9 @@ export default function HomePage() {
           <div className="flex flex-col lg:flex-row xl:w-[43%] gap-5 h-full">
             {/* Gauge */}
             <div className="bg-[#2a2a2a] rounded-[32px] p-8 flex flex-col items-center flex-1 shadow-[0_16px_40px_rgba(0,0,0,0.15)] shrink-0 min-h-[380px] justify-between">
-              <h3 className="text-[15.5px] font-extrabold text-white/90 tracking-tight">Papers Generated</h3>
+              <h3 className="text-[15.5px] font-extrabold text-white/90 tracking-tight">
+                {totalSubmissions > 0 ? "Reviewed this week" : "Papers Generated"}
+              </h3>
               <div className="relative w-full max-w-[210px] aspect-[2/1] mt-10 flex flex-col items-center justify-end">
                 <svg className="absolute inset-0 w-full h-full overflow-visible" viewBox="0 0 100 50">
                   <path d="M 5 50 A 45 45 0 0 1 95 50" fill="none" stroke="#333333" strokeWidth="18" strokeLinecap="round" />
@@ -99,7 +107,7 @@ export default function HomePage() {
                     strokeDasharray={arcLen}
                     strokeDashoffset={dashOffset}
                   />
-                  {papersGenerated > 0 && (
+                  {gaugeVal > 0 && (
                     <g transform="translate(90.5, 30.5) rotate(25.6)">
                       <path d="M0 -5 L1.2 -1.2 L5 0 L1.2 1.2 L0 5 L-1.2 1.2 L-5 0 L-1.2 -1.2 Z" fill="white" />
                     </g>
@@ -109,20 +117,22 @@ export default function HomePage() {
                   <div className="text-[54px] font-extrabold leading-none tracking-tighter text-white flex items-baseline">
                     {gaugeVal}<span className="text-[21px] font-bold text-gray-400 ml-1">/ {gaugeMax}</span>
                   </div>
-                  <div className="text-[13px] font-extrabold text-gray-400 mt-2 tracking-widest uppercase">Papers</div>
+                  <div className="text-[13px] font-extrabold text-gray-400 mt-2 tracking-widest uppercase">
+                    {totalSubmissions > 0 ? "Reviews" : "Papers"}
+                  </div>
                 </div>
               </div>
               <Link
-                href="/assignments"
+                href={totalSubmissions > 0 ? "/assignments" : "/assignments"}
                 className="mt-10 bg-white text-gray-900 font-extrabold px-6 py-4 rounded-full text-[14.5px] w-full text-center hover:bg-gray-50 transition-colors shadow-lg"
               >
-                View All Assignments
+                {totalSubmissions > 0 ? "Continue to classroom" : "View All Assignments"}
               </Link>
             </div>
 
             {/* Stat cards */}
             <div className="flex flex-col gap-5 flex-1 min-w-[200px]">
-              <StatCard label="Papers Generated" value={papersGenerated} />
+              <StatCard label="Assignments Graded" value={gradedTotal} />
               <div className="bg-[#303030] rounded-[32px] p-6 flex flex-col items-center justify-center flex-1 shadow-[0_16px_40px_rgba(42,42,42,0.2)] min-h-[140px]">
                 <span className="text-[13px] font-medium text-white/90 text-center mb-1.5">Time Saved By AI</span>
                 <span className="text-[38px] font-extrabold text-white leading-none tracking-tight mb-2">

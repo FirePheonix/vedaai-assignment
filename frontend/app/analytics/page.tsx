@@ -1,53 +1,46 @@
 "use client"
 
-import { BarChart2, FileText, Sparkles, Clock, CheckCircle, AlertCircle, Loader } from "lucide-react"
+import { BarChart2 } from "lucide-react"
 import { trpc } from "@/lib/trpc"
 
-function StatCard({ label, value, sub, color = "#111111" }: { label: string; value: string | number; sub?: string; color?: string }) {
+function ScoreTile({ label, value, color }: { label: string; value: string; color: string }) {
   return (
-    <div className="bg-white rounded-[24px] p-6 flex flex-col items-center justify-center text-center shadow-[0_8px_24px_rgba(0,0,0,0.03)] border border-gray-50">
-      <span className="text-[42px] font-extrabold leading-tight tracking-tight mb-1" style={{ color }}>{value}</span>
-      <span className="text-[14px] font-semibold text-gray-600">{label}</span>
-      {sub && <span className="text-[11px] text-gray-400 mt-1">{sub}</span>}
+    <div className="bg-white rounded-[20px] p-5 flex flex-col items-center justify-center shadow-sm">
+      <span className="text-[32px] font-extrabold leading-tight tracking-tight mb-1" style={{ color }}>
+        {value}
+      </span>
+      <span className="text-[12px] font-semibold text-gray-500 text-center">{label}</span>
     </div>
   )
 }
 
+const GRADE_COLORS: Record<string, string> = {
+  A: "#4ebf7b",
+  B: "#f5c842",
+  C: "#fe8c2b",
+  D: "#fe5b2b",
+  belowD: "#e02424",
+}
+const GRADE_LABELS: Record<string, string> = {
+  A: "A",
+  B: "B",
+  C: "C",
+  D: "D",
+  belowD: "Below\nD",
+}
+
 export default function AnalyticsPage() {
-  const { data: assignments = [], isLoading } = trpc.assignment.list.useQuery()
+  const { data: stats, isLoading: statsLoading } = trpc.submission.getTeacherAnalytics.useQuery()
+  const { data: assignments = [], isLoading: assignmentsLoading } = trpc.assignment.list.useQuery()
 
-  const total = assignments.length
-  const done = assignments.filter((a) => a.status === "done").length
-  const pending = assignments.filter((a) => ["pending", "queued", "processing"].includes(a.status)).length
-  const failed = assignments.filter((a) => a.status === "failed").length
-  const timeSaved = Math.round((done * 15) / 60 * 10) / 10
+  const isLoading = statsLoading || assignmentsLoading
 
-  // Subject breakdown
-  const subjectMap: Record<string, number> = {}
-  assignments.forEach((a) => {
-    subjectMap[a.subject] = (subjectMap[a.subject] ?? 0) + 1
-  })
-  const topSubjects = Object.entries(subjectMap)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
+  const papersGenerated = assignments.filter((a) => a.status === "done").length
+  const timeSaved = Math.round((papersGenerated * 15) / 60 * 10) / 10
 
-  // Papers generated per day (last 7 days)
-  const dayLabels = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date()
-    d.setDate(d.getDate() - (6 - i))
-    return d.toLocaleDateString("en-GB", { weekday: "short" })
-  })
-  const dayCounts = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date()
-    d.setDate(d.getDate() - (6 - i))
-    const dayStr = d.toDateString()
-    return assignments.filter(
-      (a) => a.status === "done" && new Date(a.assignedOn).toDateString() === dayStr
-    ).length
-  })
-  const maxDay = Math.max(...dayCounts, 1)
-
-  const gaugeFraction = total > 0 ? done / total : 0
+  const gaugeFraction = stats && stats.totalSubmissions > 0
+    ? stats.gradedCount / stats.totalSubmissions
+    : 0
   const arcLen = 141.37
 
   if (isLoading) {
@@ -58,32 +51,46 @@ export default function AnalyticsPage() {
     )
   }
 
-  if (total === 0) {
+  const hasData = stats && stats.totalSubmissions > 0
+
+  if (!hasData) {
     return (
       <div className="flex flex-col h-full items-center justify-center gap-4 text-center px-8">
         <BarChart2 size={48} className="text-gray-200" strokeWidth={1.5} />
-        <p className="text-gray-400 font-medium">No data yet. Create your first assignment to see analytics.</p>
+        <p className="text-gray-400 font-medium">
+          No submission data yet. Publish an assignment and grade some submissions to see analytics.
+        </p>
       </div>
     )
   }
+
+  const buckets = [
+    { key: "A", count: stats.gradeBuckets.A, range: "≥ 80%" },
+    { key: "B", count: stats.gradeBuckets.B, range: "60–79%" },
+    { key: "C", count: stats.gradeBuckets.C, range: "40–59%" },
+    { key: "D", count: stats.gradeBuckets.D, range: "20–39%" },
+    { key: "belowD", count: stats.gradeBuckets.belowD, range: "< 20%" },
+  ]
 
   return (
     <div className="flex flex-col h-full bg-[#f2f4f7] md:bg-transparent overflow-hidden px-4 md:px-0 py-4 md:pr-4 pb-24 md:pb-4 gap-4">
       <div className="flex-1 overflow-y-auto w-full relative h-[calc(100vh-2rem)]">
         <div className="w-full flex flex-col xl:flex-row gap-5">
 
-          {/* Left Column */}
+          {/* ── Left Column ── */}
           <div className="flex flex-col flex-1 gap-5">
 
-            {/* Summary header */}
+            {/* Class Performance Summary */}
             <div className="bg-[#dee1e5] rounded-[32px] p-6 shadow-[0_12px_44px_rgba(0,0,0,0.06)] border border-white/40">
-              <h2 className="text-center text-subheading text-gray-900 mb-6">Paper Generation Summary</h2>
+              <h2 className="text-center text-[17px] font-extrabold text-gray-900 mb-6">
+                Overall Class Performance Summary
+              </h2>
 
-              <div className="flex flex-col lg:flex-row gap-4 lg:gap-5">
+              <div className="flex flex-col lg:flex-row gap-4">
                 {/* Gauge */}
-                <div className="bg-[#2a2a2a] rounded-[24px] p-6 lg:w-[38%] flex flex-col items-center justify-between text-white shadow-[0_12px_40px_rgba(0,0,0,0.2)] shrink-0 min-h-[300px]">
-                  <h3 className="text-normal mb-auto self-start text-gray-100">Papers Generated</h3>
-                  <div className="relative w-full max-w-[200px] aspect-[2/1] mb-6 mt-6 flex flex-col items-center justify-end">
+                <div className="bg-[#2a2a2a] rounded-[24px] p-6 lg:w-[38%] flex flex-col items-center justify-between text-white shadow-[0_12px_40px_rgba(0,0,0,0.2)] shrink-0 min-h-[280px]">
+                  <h3 className="text-[13px] font-semibold text-gray-300 self-start">Submissions</h3>
+                  <div className="relative w-full max-w-[180px] aspect-[2/1] flex flex-col items-center justify-end my-4">
                     <svg className="absolute inset-0 w-full h-full overflow-visible" viewBox="0 0 100 50">
                       <path d="M 5 50 A 45 45 0 0 1 95 50" fill="none" stroke="#3a3a3a" strokeWidth="18" strokeLinecap="round" />
                       <path
@@ -97,130 +104,171 @@ export default function AnalyticsPage() {
                       />
                     </svg>
                     <div className="absolute w-full bottom-0 flex flex-col items-center justify-end translate-y-2">
-                      <div className="text-[40px] font-extrabold leading-none tracking-tight">
-                        {done}<span className="text-[18px] font-medium text-gray-400">/{total}</span>
+                      <div className="text-[36px] font-extrabold leading-none tracking-tight">
+                        {stats.gradedCount}<span className="text-[15px] font-medium text-gray-400">/{stats.totalSubmissions}</span>
                       </div>
-                      <div className="text-[12px] font-medium text-gray-400 mt-0.5">Papers / Assignments</div>
+                      <div className="text-[11px] font-medium text-gray-400 mt-0.5">Graded / Total</div>
                     </div>
                   </div>
-                  <div className="flex flex-col gap-2.5 mt-auto w-full px-2 text-[12px] font-medium">
+                  <div className="flex flex-col gap-2 w-full px-2 text-[12px] font-medium mt-auto">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-3.5 h-3.5 rounded-sm bg-[#ff5a22]" />
-                      <span className="text-gray-100">Generated</span>
+                      <div className="w-3 h-3 rounded-sm bg-[#ff5a22]" />
+                      <span className="text-gray-100">Graded</span>
                     </div>
                     <div className="flex items-center gap-2.5">
-                      <div className="w-3.5 h-3.5 rounded-sm bg-[#3a3a3a]" />
-                      <span className="text-gray-400">Pending</span>
+                      <div className="w-3 h-3 rounded-sm bg-[#3a3a3a]" />
+                      <span className="text-gray-400">Submitted</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Stat cards */}
-                <div className="grid grid-cols-2 gap-4 lg:gap-5 flex-1 w-full">
-                  <StatCard label="Papers Generated" value={done} color="#11b76b" />
-                  <StatCard label="Pending" value={pending} color="#fc582e" />
-                  <StatCard label="Time Saved" value={timeSaved > 0 ? `${timeSaved}h` : "—"} sub="~15 min per paper" color="#2a2a2a" />
-                  <StatCard label="Failed" value={failed} color={failed > 0 ? "#e02424" : "#a0a5b1"} />
+                {/* Score tiles */}
+                <div className="grid grid-cols-2 gap-3 flex-1">
+                  <ScoreTile label="Average Score" value={`${stats.avgScore}%`} color="#4ebf7b" />
+                  <ScoreTile label="Top Score" value={`${stats.topScore}%`} color="#fe5b2b" />
+                  <ScoreTile label="Class Median" value={`${stats.medianScore}%`} color="#111" />
+                  <ScoreTile label="Lowest Score" value={`${stats.lowestScore}%`} color="#a0a5b1" />
                 </div>
               </div>
             </div>
 
-            {/* 7-day bar chart */}
-            <div className="bg-white rounded-[32px] p-6 lg:p-8 shadow-[0_12px_44px_rgba(0,0,0,0.04)] border border-gray-50/50">
-              <h2 className="text-[17px] font-extrabold text-gray-900 mb-6">Papers Generated — Last 7 Days</h2>
-              <div className="flex items-end gap-3 h-40">
-                {dayCounts.map((count, i) => (
-                  <div key={i} className="flex flex-col items-center gap-2 flex-1">
-                    <span className="text-[11px] font-bold text-gray-500">{count > 0 ? count : ""}</span>
-                    <div className="w-full rounded-t-xl bg-orange-100 relative" style={{ height: "100px" }}>
-                      <div
-                        className="absolute bottom-0 w-full rounded-t-xl bg-[#fe5b2b] transition-all"
-                        style={{ height: `${(count / maxDay) * 100}%`, minHeight: count > 0 ? "8px" : "0" }}
-                      />
+            {/* Student Segmentation */}
+            <div className="bg-[#fe5b2b] rounded-[32px] p-6 shadow-[0_12px_44px_rgba(254,91,43,0.2)]">
+              <h2 className="text-[17px] font-extrabold text-white mb-5">
+                Student Segmentation <span className="text-white/70 font-medium text-[13px]">(Based on grades)</span>
+              </h2>
+              <div className="flex items-end gap-3 justify-between">
+                {buckets.map(({ key, count }) => (
+                  <div key={key} className="flex flex-col items-center gap-2 flex-1">
+                    <div
+                      className="w-full rounded-[16px] flex flex-col items-center justify-center py-5 gap-1"
+                      style={{ backgroundColor: GRADE_COLORS[key] }}
+                    >
+                      <span className="text-white text-[22px] font-extrabold leading-none whitespace-pre-line text-center">
+                        {GRADE_LABELS[key]}
+                      </span>
                     </div>
-                    <span className="text-[11px] font-medium text-gray-400">{dayLabels[i]}</span>
+                    <span className="text-white font-extrabold text-[15px]">{count}</span>
+                    <span className="text-white/60 text-[11px] font-medium">Students</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Status breakdown */}
-            <div className="bg-white rounded-[32px] p-6 lg:p-8 shadow-[0_12px_44px_rgba(0,0,0,0.04)] border border-gray-50/50">
-              <h2 className="text-[17px] font-extrabold text-gray-900 mb-5">Assignment Status Breakdown</h2>
-              <div className="flex flex-col gap-3">
+            {/* AI usage */}
+            <div className="bg-white rounded-[32px] p-6 shadow-[0_12px_44px_rgba(0,0,0,0.04)] border border-gray-50/50">
+              <h2 className="text-[17px] font-extrabold text-gray-900 mb-5">AI Time Savings</h2>
+              <div className="grid grid-cols-3 gap-4">
                 {[
-                  { label: "Generated", count: done, color: "#4ebf7b", icon: CheckCircle },
-                  { label: "Pending / Queued", count: pending, color: "#fc582e", icon: Loader },
-                  { label: "Failed", count: failed, color: "#e02424", icon: AlertCircle },
-                ].map(({ label, count, color, icon: Icon }) => (
-                  <div key={label} className="flex items-center gap-4">
-                    <Icon size={18} strokeWidth={2.5} style={{ color }} className="shrink-0" />
-                    <span className="text-[14px] font-semibold text-gray-700 w-40">{label}</span>
-                    <div className="flex-1 bg-gray-100 rounded-full h-2.5 overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all"
-                        style={{ width: total > 0 ? `${(count / total) * 100}%` : "0%", backgroundColor: color }}
-                      />
-                    </div>
-                    <span className="text-[13px] font-bold text-gray-500 w-6 text-right">{count}</span>
+                  { label: "Papers Generated", value: papersGenerated, color: "#fe5b2b" },
+                  { label: "Assignments Graded", value: stats.gradedCount, color: "#4ebf7b" },
+                  { label: "Est. Time Saved", value: timeSaved > 0 ? `${timeSaved}h` : "—", color: "#111" },
+                ].map(({ label, value, color }) => (
+                  <div key={label} className="text-center">
+                    <div className="text-[32px] font-extrabold leading-tight mb-1" style={{ color }}>{value}</div>
+                    <div className="text-[12px] font-semibold text-gray-500">{label}</div>
                   </div>
                 ))}
               </div>
             </div>
-
           </div>
 
-          {/* Right Column */}
-          <div className="lg:w-[380px] shrink-0 flex flex-col gap-5">
+          {/* ── Right Column ── */}
+          <div className="xl:w-[360px] shrink-0 flex flex-col gap-5">
 
-            {/* Top subjects */}
-            <div className="bg-[#dee1e5] rounded-[32px] p-6 shadow-[0_12px_44px_rgba(0,0,0,0.06)] border border-white/40">
-              <h2 className="text-subheading text-gray-900 mb-5">Top Subjects</h2>
-              {topSubjects.length === 0 ? (
-                <p className="text-gray-400 text-normal">No assignments yet.</p>
-              ) : (
-                <div className="bg-white rounded-[24px] p-5 shadow-[0_8px_24px_rgba(0,0,0,0.03)]">
-                  <ul className="flex flex-col gap-4">
-                    {topSubjects.map(([subject, count], i) => (
-                      <li key={subject} className="flex items-center gap-3">
-                        <span className="text-[13px] font-bold text-gray-400 w-4">{i + 1}.</span>
-                        <div className="flex-1">
-                          <div className="flex justify-between mb-1">
-                            <span className="text-[13px] font-semibold text-gray-800">{subject}</span>
-                            <span className="text-[13px] font-bold text-gray-500">{count}</span>
-                          </div>
-                          <div className="w-full bg-gray-100 rounded-full h-1.5">
-                            <div
-                              className="h-full rounded-full bg-[#fe5b2b]"
-                              style={{ width: `${(count / (topSubjects[0]?.[1] ?? 1)) * 100}%` }}
-                            />
-                          </div>
+            {/* Learning Gaps Analysis */}
+            <div className="bg-white rounded-[32px] p-6 shadow-[0_12px_44px_rgba(0,0,0,0.04)] border border-gray-50/50">
+              <h2 className="text-[17px] font-extrabold text-gray-900 mb-1">Learning Gaps Analysis</h2>
+              <p className="text-[12px] text-gray-400 mb-5">Based on grade distribution</p>
+
+              {/* Score bands as "problem areas" */}
+              <div className="mb-6">
+                <p className="text-[13px] font-bold text-gray-700 mb-3">Grade band breakdown</p>
+                <div className="flex flex-col gap-3">
+                  {buckets.map(({ key, count, range }) => {
+                    const total = Object.values(stats.gradeBuckets).reduce((a, b) => a + b, 0)
+                    const pct = total > 0 ? Math.round((count / total) * 100) : 0
+                    return (
+                      <div key={key} className="flex items-center gap-3">
+                        <span
+                          className="text-[12px] font-bold w-14 text-right shrink-0"
+                          style={{ color: GRADE_COLORS[key] }}
+                        >
+                          {GRADE_LABELS[key].replace("\n", " ")}
+                        </span>
+                        <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all"
+                            style={{ width: `${pct}%`, backgroundColor: GRADE_COLORS[key] }}
+                          />
                         </div>
-                      </li>
-                    ))}
-                  </ul>
+                        <span className="text-[12px] font-bold text-gray-500 w-8 text-right shrink-0">{pct}%</span>
+                        <span className="text-[11px] text-gray-400 w-14 shrink-0">{range}</span>
+                      </div>
+                    )
+                  })}
                 </div>
-              )}
+              </div>
+
+              {/* Recommended actions based on data */}
+              <div>
+                <p className="text-[13px] font-bold text-gray-700 mb-3">Recommended Actions</p>
+                <div className="flex flex-col gap-3">
+                  {stats.gradeBuckets.belowD > 0 && (
+                    <div className="flex gap-2.5 text-[12px] text-gray-600">
+                      <span className="font-bold text-red-500 shrink-0">1.</span>
+                      <span>{stats.gradeBuckets.belowD} student{stats.gradeBuckets.belowD > 1 ? "s" : ""} scored below 20% — consider remedial sessions.</span>
+                    </div>
+                  )}
+                  {stats.gradeBuckets.D > 0 && (
+                    <div className="flex gap-2.5 text-[12px] text-gray-600">
+                      <span className="font-bold text-orange-500 shrink-0">{stats.gradeBuckets.belowD > 0 ? "2." : "1."}</span>
+                      <span>{stats.gradeBuckets.D} student{stats.gradeBuckets.D > 1 ? "s" : ""} in D band — revisit core concepts with real-life examples.</span>
+                    </div>
+                  )}
+                  {stats.avgScore < 60 && (
+                    <div className="flex gap-2.5 text-[12px] text-gray-600">
+                      <span className="font-bold text-yellow-600 shrink-0">•</span>
+                      <span>Class average is below 60% — consider re-teaching key topics before the next assessment.</span>
+                    </div>
+                  )}
+                  {stats.gradeBuckets.A >= stats.gradedCount * 0.5 && (
+                    <div className="flex gap-2.5 text-[12px] text-gray-600">
+                      <span className="font-bold text-green-600 shrink-0">•</span>
+                      <span>Over half the class scored A — great performance! Consider moving to advanced topics.</span>
+                    </div>
+                  )}
+                  {stats.gradedCount === 0 && (
+                    <p className="text-[12px] text-gray-400">Grade some submissions to see recommendations.</p>
+                  )}
+                </div>
+              </div>
             </div>
 
-            {/* AI usage stats */}
-            <div className="bg-white rounded-[32px] p-6 shadow-[0_12px_44px_rgba(0,0,0,0.04)] flex-1">
-              <h2 className="text-[17px] font-extrabold text-gray-900 mb-5">AI Usage Stats</h2>
-              <div className="flex flex-col gap-4">
-                {[
-                  { icon: FileText, label: "Total Assignments", value: total, color: "#111111" },
-                  { icon: Sparkles, label: "Papers Generated", value: done, color: "#fe5b2b" },
-                  { icon: Clock, label: "Est. Time Saved", value: timeSaved > 0 ? `${timeSaved} hrs` : "—", color: "#4ebf7b" },
-                ].map(({ icon: Icon, label, value, color }) => (
-                  <div key={label} className="flex items-center gap-4">
-                    <div className="w-9 h-9 rounded-2xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${color}18` }}>
-                      <Icon size={16} strokeWidth={2.5} style={{ color }} />
+            {/* AI Feedback Summary */}
+            <div className="bg-[#dee1e5] rounded-[32px] p-6 flex-1 shadow-[0_12px_44px_rgba(0,0,0,0.06)] border border-white/40">
+              <h2 className="text-[17px] font-extrabold text-gray-900 mb-1">AI Feedback Summary</h2>
+              <p className="text-[12px] text-gray-500 mb-4">
+                {stats.feedbacks.length} feedback note{stats.feedbacks.length !== 1 ? "s" : ""} from graded submissions
+              </p>
+              {stats.feedbacks.length === 0 ? (
+                <p className="text-[13px] text-gray-400">
+                  No feedback written yet. Add notes when grading to see a summary here.
+                </p>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {stats.feedbacks.slice(0, 4).map((fb, i) => (
+                    <div key={i} className="bg-white rounded-[16px] p-3.5 shadow-sm">
+                      <p className="text-[12px] text-gray-600 leading-relaxed line-clamp-3">{fb}</p>
                     </div>
-                    <span className="flex-1 text-[14px] font-semibold text-gray-700">{label}</span>
-                    <span className="text-[15px] font-extrabold text-gray-900">{value}</span>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                  {stats.feedbacks.length > 4 && (
+                    <p className="text-[11px] text-gray-400 text-center">
+                      +{stats.feedbacks.length - 4} more feedback notes
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
 
           </div>

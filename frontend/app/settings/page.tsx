@@ -1,58 +1,40 @@
 "use client"
 
-import { useState } from "react"
-import { User, School, Bell, Shield, ChevronRight, Check } from "lucide-react"
+import { useState, useRef } from "react"
+import { useClerk, useUser } from "@clerk/nextjs"
+import {
+  Camera, Check, Loader2, Shield, Bell, LogOut,
+  ArrowLeftRight, AlertTriangle, X,
+} from "lucide-react"
+import Image from "next/image"
 import Header from "@/components/ui/Header"
-import { useRouter } from "next/navigation"
+import { trpc } from "@/lib/trpc"
 
-function SettingsSection({ title, children }: { title: string; children: React.ReactNode }) {
+/* ── shared components ───────────────────────────────────── */
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="bg-white rounded-[28px] border border-gray-100/30 shadow-[0_2px_12px_rgba(0,0,0,0.02)] overflow-hidden">
-      <div className="px-6 pt-5 pb-3">
-        <h2 className="text-normal font-extrabold text-gray-500 uppercase tracking-wider text-[11px]">{title}</h2>
-      </div>
-      <div className="pb-2">{children}</div>
-    </div>
+    <p className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider px-1 mb-2 mt-1">
+      {children}
+    </p>
   )
 }
 
-function SettingsRow({
-  icon: Icon,
+function Toggle({
   label,
-  value,
-  onClick,
-  accent,
+  description,
+  defaultOn,
 }: {
-  icon: React.ElementType
   label: string
-  value?: string
-  onClick?: () => void
-  accent?: string
+  description?: string
+  defaultOn?: boolean
 }) {
-  return (
-    <button
-      onClick={onClick}
-      className="w-full flex items-center gap-4 px-6 py-3.5 hover:bg-gray-50/70 transition-colors text-left"
-    >
-      <div className={`w-9 h-9 rounded-2xl flex items-center justify-center shrink-0 ${accent ?? "bg-gray-100"}`}>
-        <Icon size={16} strokeWidth={2.5} className={accent ? "text-white" : "text-gray-500"} />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-normal font-semibold text-gray-900">{label}</p>
-        {value && <p className="text-normal text-[12px] text-gray-400 truncate">{value}</p>}
-      </div>
-      <ChevronRight size={16} strokeWidth={2.5} className="text-gray-300 shrink-0" />
-    </button>
-  )
-}
-
-function Toggle({ label, description, defaultOn }: { label: string; description?: string; defaultOn?: boolean }) {
   const [on, setOn] = useState(defaultOn ?? false)
   return (
-    <div className="flex items-center gap-4 px-6 py-3.5">
+    <div className="flex items-center gap-4 px-5 py-4">
       <div className="flex-1 min-w-0">
-        <p className="text-normal font-semibold text-gray-900">{label}</p>
-        {description && <p className="text-normal text-[12px] text-gray-400">{description}</p>}
+        <p className="text-[14px] font-semibold text-gray-900">{label}</p>
+        {description && <p className="text-[12px] text-gray-400 mt-0.5">{description}</p>}
       </div>
       <button
         onClick={() => setOn((v) => !v)}
@@ -66,30 +48,153 @@ function Toggle({ label, description, defaultOn }: { label: string; description?
   )
 }
 
-export default function SettingsPage() {
-  const router = useRouter()
-  const [saved, setSaved] = useState(false)
+/* ── role switch confirmation modal ─────────────────────── */
 
-  const handleSave = () => {
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+function SwitchRoleModal({
+  currentRole,
+  onConfirm,
+  onCancel,
+  loading,
+}: {
+  currentRole: string
+  onConfirm: () => void
+  onCancel: () => void
+  loading: boolean
+}) {
+  const targetRole = currentRole === "teacher" ? "Student" : "Teacher"
+  const warn = currentRole === "teacher"
+    ? "You'll lose access to paper creation, classes, and the library."
+    : "You'll gain access to create and manage question papers."
+
+  return (
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-[28px] p-7 max-w-sm w-full shadow-2xl">
+        <div className="w-12 h-12 rounded-2xl bg-orange-100 flex items-center justify-center mb-4">
+          <AlertTriangle size={22} className="text-orange-500" strokeWidth={2.5} />
+        </div>
+        <h2 className="text-[18px] font-extrabold text-gray-900 mb-2">
+          Switch to {targetRole}?
+        </h2>
+        <p className="text-[13px] text-gray-500 leading-relaxed mb-6">{warn}</p>
+        <div className="flex gap-3">
+          <button
+            onClick={onCancel}
+            disabled={loading}
+            className="flex-1 py-3 rounded-2xl border border-gray-200 text-[14px] font-semibold text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={loading}
+            className="flex-1 py-3 rounded-2xl bg-[#111] text-white text-[14px] font-extrabold hover:bg-gray-800 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+          >
+            {loading ? <Loader2 size={15} className="animate-spin" /> : null}
+            {loading ? "Switching…" : `Yes, switch`}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ── main page ───────────────────────────────────────────── */
+
+export default function SettingsPage() {
+  const { user, isLoaded } = useUser()
+  const { session, signOut } = useClerk()
+  const { data: profile } = trpc.user.getMe.useQuery()
+
+  const role = (user?.publicMetadata as Record<string, string> | undefined)?.role ?? profile?.role ?? null
+  const isTeacher = role === "teacher"
+
+  /* profile pic */
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
+
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !user) return
+    setUploadingPhoto(true)
+    try {
+      await user.setProfileImage({ file })
+    } finally {
+      setUploadingPhoto(false)
+      if (fileRef.current) fileRef.current.value = ""
+    }
+  }
+
+  /* profile fields */
+  const [firstName, setFirstName] = useState("")
+  const [lastName, setLastName] = useState("")
+  const [schoolName, setSchoolName] = useState("")
+  const [fieldsInitialized, setFieldsInitialized] = useState(false)
+
+  if (isLoaded && user && !fieldsInitialized) {
+    setFirstName(user.firstName ?? "")
+    setLastName(user.lastName ?? "")
+    setSchoolName(profile?.schoolName ?? "")
+    setFieldsInitialized(true)
+  }
+  // keep schoolName in sync once profile loads
+  if (profile?.schoolName && schoolName === "" && fieldsInitialized) {
+    setSchoolName(profile.schoolName)
+  }
+
+  const updateProfile = trpc.user.updateProfile.useMutation()
+  const [profileSaved, setProfileSaved] = useState(false)
+
+  const handleSaveProfile = async () => {
+    await updateProfile.mutateAsync({
+      firstName: firstName.trim() || undefined,
+      lastName: lastName.trim() || undefined,
+      ...(isTeacher ? { schoolName: schoolName.trim() } : {}),
+    })
+    setProfileSaved(true)
+    setTimeout(() => setProfileSaved(false), 2000)
+  }
+
+  /* role switch */
+  const [showSwitch, setShowSwitch] = useState(false)
+  const switchRole = trpc.user.setRole.useMutation({
+    onSuccess: async (data) => {
+      await session?.reload()
+      setShowSwitch(false)
+      window.location.href = data.role === "student" ? "/student/home" : "/home"
+    },
+  })
+
+  const handleConfirmSwitch = () => {
+    const target = isTeacher ? "student" : "teacher"
+    switchRole.mutate({ role: target })
+  }
+
+  if (!isLoaded) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <Loader2 size={24} className="animate-spin text-gray-300" />
+      </div>
+    )
   }
 
   return (
     <>
+      {showSwitch && role && (
+        <SwitchRoleModal
+          currentRole={role}
+          onConfirm={handleConfirmSwitch}
+          onCancel={() => setShowSwitch(false)}
+          loading={switchRole.isPending}
+        />
+      )}
+
       <Header breadcrumb="Settings" showBack={false} />
 
-      <main className="flex-1 overflow-y-auto px-5 md:px-8 py-4 md:py-7 h-[calc(100vh-70px)] md:h-full">
+      <main className="flex-1 overflow-y-auto px-5 md:px-8 py-4 md:py-7 h-[calc(100vh-70px)] md:h-full pb-40">
+
         {/* Mobile title */}
         <div className="md:hidden flex items-center justify-center relative mb-8">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="absolute left-0 w-10 h-10 bg-gray-200/50 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-800"><path d="m15 18-6-6 6-6" /></svg>
-          </button>
-          <h1 className="text-heading text-[16px] text-gray-900 font-extrabold">Settings</h1>
+          <h1 className="text-[16px] text-gray-900 font-extrabold">Settings</h1>
         </div>
 
         {/* Desktop title */}
@@ -101,72 +206,204 @@ export default function SettingsPage() {
           <p className="text-normal text-gray-400 ml-4 mt-1.5">Manage your profile and preferences.</p>
         </div>
 
-        <div className="max-w-xl mx-auto md:mx-0 flex flex-col gap-4 pb-40">
-          {/* Profile */}
-          <div className="bg-white rounded-[28px] border border-gray-100/30 shadow-[0_2px_12px_rgba(0,0,0,0.02)] p-6">
-            <div className="flex items-center gap-4 mb-5">
-              <div className="w-16 h-16 rounded-full bg-[#fddfae] flex items-center justify-center border-4 border-white shadow-md">
-                <span className="text-3xl leading-none">🐵</span>
+        <div className="max-w-xl mx-auto md:mx-0 flex flex-col gap-5">
+
+          {/* ── Profile card ── */}
+          <div className="bg-white rounded-[28px] border border-gray-100/30 shadow-[0_2px_12px_rgba(0,0,0,0.02)] p-6 flex flex-col gap-5">
+
+            {/* Avatar + role badge */}
+            <div className="flex items-center gap-4">
+              <div className="relative shrink-0">
+                <div className="w-18 h-18 rounded-full overflow-hidden bg-orange-100 border-4 border-white shadow-md flex items-center justify-center">
+                  {user?.imageUrl ? (
+                    <Image
+                      src={user.imageUrl}
+                      alt="Profile"
+                      width={72}
+                      height={72}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-3xl">👤</span>
+                  )}
+                </div>
+                <button
+                  onClick={() => fileRef.current?.click()}
+                  disabled={uploadingPhoto}
+                  className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#111] flex items-center justify-center border-2 border-white shadow hover:bg-gray-800 transition-colors disabled:opacity-60"
+                >
+                  {uploadingPhoto
+                    ? <Loader2 size={12} className="animate-spin text-white" />
+                    : <Camera size={12} className="text-white" strokeWidth={2.5} />
+                  }
+                </button>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handlePhotoChange}
+                />
               </div>
-              <div>
-                <p className="text-sidebar-item font-extrabold text-gray-900">Delhi Public School</p>
-                <p className="text-normal text-gray-400">Bokaro Steel City</p>
+              <div className="min-w-0">
+                <p className="font-extrabold text-gray-900 text-[16px] truncate">
+                  {user?.fullName || user?.firstName || "Your Name"}
+                </p>
+                <p className="text-[12px] text-gray-400 truncate">{user?.primaryEmailAddress?.emailAddress}</p>
+                <span className={`inline-block mt-1.5 px-3 py-0.5 rounded-full text-[11px] font-bold ${
+                  isTeacher
+                    ? "bg-orange-100 text-orange-600"
+                    : "bg-blue-100 text-blue-600"
+                }`}>
+                  {isTeacher ? "Teacher" : "Student"}
+                </span>
               </div>
             </div>
 
-            <div className="flex flex-col gap-3">
+            {/* Name fields */}
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-normal text-[11px] font-extrabold text-gray-400 uppercase tracking-wider block mb-1.5">
+                <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider block mb-1.5">
+                  First Name
+                </label>
+                <input
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="First name"
+                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 text-[14px] text-gray-900 outline-none focus:border-orange-300 focus:ring-2 focus:ring-orange-100 transition-all"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider block mb-1.5">
+                  Last Name
+                </label>
+                <input
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="Last name"
+                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 text-[14px] text-gray-900 outline-none focus:border-orange-300 focus:ring-2 focus:ring-orange-100 transition-all"
+                />
+              </div>
+            </div>
+
+            {/* School name — teachers only */}
+            {isTeacher && (
+              <div>
+                <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider block mb-1.5">
                   School Name
                 </label>
                 <input
-                  defaultValue="Delhi Public School"
-                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 text-normal text-gray-900 outline-none focus:border-orange-300 focus:ring-2 focus:ring-orange-100 transition-all"
+                  value={schoolName}
+                  onChange={(e) => setSchoolName(e.target.value)}
+                  placeholder="e.g. Delhi Public School"
+                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 text-[14px] text-gray-900 outline-none focus:border-orange-300 focus:ring-2 focus:ring-orange-100 transition-all"
                 />
               </div>
-              <div>
-                <label className="text-normal text-[11px] font-extrabold text-gray-400 uppercase tracking-wider block mb-1.5">
-                  City / Location
-                </label>
-                <input
-                  defaultValue="Bokaro Steel City"
-                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 text-normal text-gray-900 outline-none focus:border-orange-300 focus:ring-2 focus:ring-orange-100 transition-all"
-                />
-              </div>
+            )}
+
+            {/* Email — read-only */}
+            <div>
+              <label className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider block mb-1.5">
+                Email
+              </label>
+              <input
+                value={user?.primaryEmailAddress?.emailAddress ?? ""}
+                readOnly
+                className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 text-[14px] text-gray-400 outline-none cursor-not-allowed"
+              />
+            </div>
+
+            {/* Save button */}
+            <button
+              onClick={handleSaveProfile}
+              disabled={updateProfile.isPending || profileSaved}
+              className={`flex items-center justify-center gap-2 py-3 rounded-2xl text-[14px] font-extrabold transition-all disabled:opacity-60 ${
+                profileSaved
+                  ? "bg-emerald-500 text-white"
+                  : "bg-[#111] text-white hover:bg-gray-800"
+              }`}
+            >
+              {updateProfile.isPending ? (
+                <><Loader2 size={15} className="animate-spin" /> Saving…</>
+              ) : profileSaved ? (
+                <><Check size={15} strokeWidth={2.5} /> Saved</>
+              ) : (
+                "Save Changes"
+              )}
+            </button>
+          </div>
+
+          {/* ── Notifications ── */}
+          <div>
+            <SectionLabel>Notifications</SectionLabel>
+            <div className="bg-white rounded-[28px] border border-gray-100/30 shadow-[0_2px_12px_rgba(0,0,0,0.02)] overflow-hidden divide-y divide-gray-50">
+              <Toggle label="Email Notifications" description="Get notified when a paper is ready" defaultOn />
+              <Toggle label="Push Notifications" description="Browser alerts for job updates" />
+              <Toggle label="Weekly Summary" description="Weekly digest of your activity" defaultOn />
+            </div>
+          </div>
+
+          {/* ── Account ── */}
+          <div>
+            <SectionLabel>Account</SectionLabel>
+            <div className="bg-white rounded-[28px] border border-gray-100/30 shadow-[0_2px_12px_rgba(0,0,0,0.02)] overflow-hidden divide-y divide-gray-50">
+
+              {/* Switch role */}
               <button
-                onClick={handleSave}
-                className={`flex items-center justify-center gap-2 mt-1 px-6 py-3 rounded-2xl text-normal font-semibold transition-all ${
-                  saved ? "bg-emerald-500 text-white" : "bg-[#1c1c1c] text-white hover:bg-black"
-                }`}
+                onClick={() => setShowSwitch(true)}
+                className="w-full flex items-center gap-4 px-5 py-4 hover:bg-gray-50/70 transition-colors text-left"
               >
-                {saved ? (
-                  <>
-                    <Check size={15} strokeWidth={2.5} /> Saved
-                  </>
-                ) : (
-                  "Save Changes"
-                )}
+                <div className="w-9 h-9 rounded-2xl bg-violet-100 flex items-center justify-center shrink-0">
+                  <ArrowLeftRight size={15} className="text-violet-600" strokeWidth={2.5} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[14px] font-semibold text-gray-900">Switch Role</p>
+                  <p className="text-[12px] text-gray-400 mt-0.5">
+                    Currently <span className="font-bold">{isTeacher ? "Teacher" : "Student"}</span> · tap to switch to {isTeacher ? "Student" : "Teacher"}
+                  </p>
+                </div>
+                <ArrowLeftRight size={14} className="text-gray-300 shrink-0" strokeWidth={2} />
+              </button>
+
+              {/* Privacy */}
+              <div className="flex items-center gap-4 px-5 py-4">
+                <div className="w-9 h-9 rounded-2xl bg-emerald-100 flex items-center justify-center shrink-0">
+                  <Shield size={15} className="text-emerald-600" strokeWidth={2.5} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[14px] font-semibold text-gray-900">Privacy Policy</p>
+                  <p className="text-[12px] text-gray-400 mt-0.5">Your data is never shared</p>
+                </div>
+              </div>
+
+              {/* Notifications placeholder */}
+              <div className="flex items-center gap-4 px-5 py-4">
+                <div className="w-9 h-9 rounded-2xl bg-blue-100 flex items-center justify-center shrink-0">
+                  <Bell size={15} className="text-blue-600" strokeWidth={2.5} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[14px] font-semibold text-gray-900">Data & Storage</p>
+                  <p className="text-[12px] text-gray-400 mt-0.5">Manage your uploaded files</p>
+                </div>
+              </div>
+
+              {/* Sign out */}
+              <button
+                onClick={() => signOut({ redirectUrl: "/" })}
+                className="w-full flex items-center gap-4 px-5 py-4 hover:bg-red-50/60 transition-colors text-left"
+              >
+                <div className="w-9 h-9 rounded-2xl bg-red-100 flex items-center justify-center shrink-0">
+                  <LogOut size={15} className="text-red-500" strokeWidth={2.5} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[14px] font-semibold text-red-500">Sign Out</p>
+                </div>
+                <X size={14} className="text-red-300 shrink-0" strokeWidth={2} />
               </button>
             </div>
           </div>
 
-          <SettingsSection title="Account">
-            <SettingsRow icon={User} label="Profile" value="John Doe · Teacher" accent="bg-blue-500" />
-            <SettingsRow icon={School} label="Institution" value="Delhi Public School" accent="bg-violet-500" />
-          </SettingsSection>
-
-          <SettingsSection title="Notifications">
-            <Toggle label="Email Notifications" description="Get notified when paper is ready" defaultOn />
-            <Toggle label="Push Notifications" description="Browser notifications for job updates" />
-            <Toggle label="Weekly Summary" description="Weekly report of your activity" defaultOn />
-          </SettingsSection>
-
-          <SettingsSection title="Privacy & Security">
-            <SettingsRow icon={Shield} label="Privacy Policy" accent="bg-emerald-500" />
-            <SettingsRow icon={Bell} label="Data & Storage" accent="bg-orange-500" />
-          </SettingsSection>
-
-          <p className="text-normal text-[11px] text-gray-300 text-center mt-2">VedaAI v1.0 · Built with ❤️ for teachers</p>
+          <p className="text-[11px] text-gray-300 text-center mt-2">VedaAI v1.0</p>
         </div>
       </main>
     </>

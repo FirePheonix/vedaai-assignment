@@ -143,6 +143,84 @@ export const submissionRouter = router({
       }
     }),
 
+  getTeacherAnalytics: teacherProcedure.query(async ({ ctx }) => {
+    const assignments = await Assignment.find({ userId: ctx.userId }).lean()
+    const assignmentIds = assignments.map((a) => a._id)
+
+    const submissions = await Submission.find({ assignmentId: { $in: assignmentIds } }).lean()
+    const graded = submissions.filter((s) => s.status === "graded" && s.totalMarksAwarded !== null && s.totalMarksAwarded !== undefined)
+    const scores = graded.map((s) => (s.totalMarksAwarded! / s.maxMarks) * 100)
+
+    const avgScore = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : 0
+    const topScore = scores.length ? Math.max(...scores) : 0
+    const lowestScore = scores.length ? Math.min(...scores) : 0
+    const sorted = [...scores].sort((a, b) => a - b)
+    const medianScore = sorted.length ? sorted[Math.floor(sorted.length / 2)] : 0
+
+    const gradeBuckets = { A: 0, B: 0, C: 0, D: 0, belowD: 0 }
+    scores.forEach((s) => {
+      if (s >= 80) gradeBuckets.A++
+      else if (s >= 60) gradeBuckets.B++
+      else if (s >= 40) gradeBuckets.C++
+      else if (s >= 20) gradeBuckets.D++
+      else gradeBuckets.belowD++
+    })
+
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    const gradedThisWeek = graded.filter((s) => s.gradedAt && s.gradedAt >= weekAgo).length
+
+    const feedbacks = graded
+      .filter((s) => s.feedback && s.feedback.trim().length > 0)
+      .map((s) => s.feedback!)
+      .slice(0, 30)
+
+    return {
+      totalSubmissions: submissions.length,
+      gradedCount: graded.length,
+      gradedThisWeek,
+      avgScore: Math.round(avgScore),
+      topScore: Math.round(topScore),
+      lowestScore: Math.round(lowestScore),
+      medianScore: Math.round(medianScore),
+      gradeBuckets,
+      feedbacks,
+    }
+  }),
+
+  getStudentAnalytics: studentProcedure.query(async ({ ctx }) => {
+    const submissions = await Submission.find({ studentId: ctx.userId }).lean()
+    const graded = submissions.filter((s) => s.status === "graded" && s.totalMarksAwarded !== null && s.totalMarksAwarded !== undefined)
+    const scores = graded.map((s) => (s.totalMarksAwarded! / s.maxMarks) * 100)
+
+    const avgScore = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : 0
+    const topScore = scores.length ? Math.max(...scores) : 0
+
+    const assignmentIds = submissions.map((s) => s.assignmentId)
+    const assignments = await Assignment.find({ _id: { $in: assignmentIds } }).lean()
+    const assignmentMap = Object.fromEntries(assignments.map((a) => [a._id.toString(), a]))
+
+    const history = graded
+      .map((s) => ({
+        id: s._id.toString(),
+        assignmentTitle: assignmentMap[s.assignmentId.toString()]?.title ?? "",
+        subject: assignmentMap[s.assignmentId.toString()]?.subject ?? "",
+        score: Math.round((s.totalMarksAwarded! / s.maxMarks) * 100),
+        marks: s.totalMarksAwarded!,
+        maxMarks: s.maxMarks,
+        gradedAt: s.gradedAt?.toISOString() ?? s.submittedAt.toISOString(),
+        feedback: s.feedback ?? null,
+      }))
+      .sort((a, b) => new Date(b.gradedAt).getTime() - new Date(a.gradedAt).getTime())
+
+    return {
+      totalSubmissions: submissions.length,
+      gradedCount: graded.length,
+      avgScore: Math.round(avgScore),
+      topScore: Math.round(topScore),
+      history,
+    }
+  }),
+
   grade: teacherProcedure
     .input(
       z.object({
