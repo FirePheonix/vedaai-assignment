@@ -12,6 +12,43 @@ import { useAssignmentStore } from "@/store/assignmentStore"
 import { trpc } from "@/lib/trpc"
 import { cn } from "@/lib/utils"
 
+function ClassSelector({
+  register,
+  errors,
+  setValue,
+}: {
+  register: ReturnType<typeof useForm<AssignmentFormData>>["register"]
+  errors: ReturnType<typeof useForm<AssignmentFormData>>["formState"]["errors"]
+  setValue: ReturnType<typeof useForm<AssignmentFormData>>["setValue"]
+}) {
+  const { data: classes = [] } = trpc.class.list.useQuery()
+
+  return (
+    <div>
+      {classes.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-2">
+          {classes.map((cls) => (
+            <button
+              key={cls.id}
+              type="button"
+              onClick={() => setValue("className", cls.name, { shouldValidate: true })}
+              className="px-3 py-1.5 bg-violet-50 text-violet-700 rounded-full text-xs font-bold hover:bg-violet-100 transition-colors"
+            >
+              {cls.name}
+            </button>
+          ))}
+        </div>
+      )}
+      <input
+        {...register("className")}
+        placeholder={classes.length > 0 ? "Pick above or type custom…" : "e.g. Grade 8B"}
+        className={cn("w-full bg-white border border-gray-100/50 rounded-2xl px-5 py-3.5 text-normal text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-200 shadow-sm", errors.className && "border-red-400")}
+      />
+      {errors.className && <p className="text-red-500 text-xs mt-1">{errors.className.message}</p>}
+    </div>
+  )
+}
+
 const QUESTION_TYPE_OPTIONS = [
   "Multiple Choice Questions",
   "Short Questions",
@@ -46,12 +83,7 @@ export default function CreateAssignmentPage() {
   const createMutation = trpc.assignment.create.useMutation()
   const generateMutation = trpc.assignment.generate.useMutation()
 
-  const {
-    register,
-    control,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<AssignmentFormData>({
+  const { register, handleSubmit, control, setValue, formState: { errors, isSubmitting } } = useForm<AssignmentFormData>({
     resolver: zodResolver(AssignmentFormSchema),
     defaultValues: {
       title: "",
@@ -210,12 +242,7 @@ export default function CreateAssignmentPage() {
               </div>
               <div>
                 <label className="block text-normal font-extrabold text-gray-900 mb-2">Class</label>
-                <input
-                  {...register("className")}
-                  placeholder="e.g. 8th Grade"
-                  className={cn("w-full bg-white border border-gray-100/50 rounded-2xl px-5 py-3.5 text-normal text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-200 shadow-sm", errors.className && "border-red-400")}
-                />
-                {errors.className && <p className="text-red-500 text-xs mt-1">{errors.className.message}</p>}
+                <ClassSelector register={register} errors={errors} setValue={setValue} />
               </div>
             </div>
 

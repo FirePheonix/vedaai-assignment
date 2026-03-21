@@ -8,7 +8,6 @@ import { trpc } from "@/lib/trpc"
 import { useRouter } from "next/navigation"
 
 function PaperCard({
-  id,
   title,
   subject,
   generatedOn,

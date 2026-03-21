@@ -47,6 +47,7 @@ export const SectionSchema = z.object({
 
 export const QuestionPaperSchema = z.object({
   id: z.string(),
+  assignmentId: z.string(),
   schoolName: z.string(),
   subject: z.string(),
   className: z.string(),

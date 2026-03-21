@@ -7,7 +7,6 @@ import {
   LayoutGrid,
   Users,
   FileText,
-  Smartphone,
   Settings,
   Sparkles,
   PieChart,
