@@ -4,6 +4,8 @@ import { Submission } from "../models/Submission"
 import { Assignment } from "../models/Assignment"
 import { QuestionPaper } from "../models/QuestionPaper"
 import { Class } from "../models/Class"
+import { mailSubmissionConfirmed } from "../lib/emails"
+import { env } from "../env"
 
 export const submissionRouter = router({
   create: studentProcedure
@@ -56,6 +58,15 @@ export const submissionRouter = router({
         },
         { upsert: true, new: true }
       )
+
+      // Fire-and-forget confirmation email to student
+      mailSubmissionConfirmed({
+        studentEmail: ctx.user.email,
+        studentName: ctx.user.name,
+        assignmentTitle: assignment.title,
+        subject: assignment.subject,
+        frontendUrl: env.FRONTEND_URL,
+      }).catch(() => {})
 
       return { submissionId: submission._id.toString() }
     }),

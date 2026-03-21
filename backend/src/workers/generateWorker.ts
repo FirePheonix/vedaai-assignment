@@ -4,8 +4,10 @@ import { env } from "@/env"
 import { logger } from "@/lib/logger"
 import { Assignment } from "@/models/Assignment"
 import { QuestionPaper } from "@/models/QuestionPaper"
+import { User } from "@/models/User"
 import { GeneratedPaperSchema } from "@/lib/paperSchema"
 import { embedTexts, retrieveChunks } from "@/lib/embed"
+import { mailPaperReady } from "@/lib/emails"
 import type { GenerateJobData } from "@/lib/queue"
 import type { Server as SocketIOServer } from "socket.io"
 
@@ -123,6 +125,30 @@ export async function processGenerateJob(data: GenerateJobData, emit: Emitter) {
     { assignmentId, paperId: paper._id, chunksUsed: contextChunks.length },
     "Paper generated"
   )
+
+  // Fire-and-forget email to teacher
+  const assignment = await Assignment.findById(assignmentId).lean()
+  if (!assignment) {
+    logger.warn({ assignmentId }, "mailPaperReady: assignment not found")
+  } else {
+    const teacher = await User.findOne({ clerkId: assignment.userId }).lean()
+    if (!teacher) {
+      logger.warn({ clerkId: assignment.userId }, "mailPaperReady: teacher User doc not found")
+    } else if (!teacher.email) {
+      logger.warn({ clerkId: assignment.userId }, "mailPaperReady: teacher has no email")
+    } else {
+      logger.info({ to: teacher.email }, "Sending paper-ready email")
+      mailPaperReady({
+        teacherEmail: teacher.email,
+        teacherName: teacher.name,
+        assignmentTitle: assignment.title,
+        subject: assignment.subject,
+        assignmentId,
+        frontendUrl: env.FRONTEND_URL,
+      }).catch((err) => logger.error({ err }, "mailPaperReady failed"))
+    }
+  }
+
   emit("job:done", { paperId: paper._id.toString() })
 
   return { paperId: paper._id.toString() }

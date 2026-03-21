@@ -5,14 +5,36 @@ import { useRouter } from "next/navigation"
 import { CheckCircle2, Loader2, AlertCircle } from "lucide-react"
 import { useAssignmentStore } from "@/store/assignmentStore"
 import { useSocket } from "@/lib/hooks/useSocket"
+import { trpc } from "@/lib/trpc"
 import { cn } from "@/lib/utils"
 
 export default function LoadingPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
-  const { jobStatus, jobProgress, jobSteps, paperId } = useAssignmentStore()
+  const { jobStatus, jobProgress, jobSteps, paperId, setJobStatus, setPaperId, setJobProgress } =
+    useAssignmentStore()
 
   useSocket(id)
+
+  // Polling fallback — if socket misses job:done, poll every 4s
+  const { data: assignment } = trpc.assignment.getById.useQuery(
+    { id },
+    {
+      refetchInterval: jobStatus === "done" ? false : 4000,
+      enabled: jobStatus !== "done",
+    }
+  )
+
+  useEffect(() => {
+    if (assignment?.status === "done" && assignment.paperId && jobStatus !== "done") {
+      setJobProgress(100)
+      setJobStatus("done")
+      setPaperId(assignment.paperId)
+    }
+    if (assignment?.status === "failed" && jobStatus !== "failed") {
+      setJobStatus("failed")
+    }
+  }, [assignment, jobStatus, setJobProgress, setJobStatus, setPaperId])
 
   useEffect(() => {
     if (jobStatus === "done" && paperId) {

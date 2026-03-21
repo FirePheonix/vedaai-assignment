@@ -15,6 +15,7 @@ import { logger } from "./lib/logger"
 import { env } from "./env"
 import { assignmentQueue } from "./lib/queue"
 import { startWorker } from "./workers/generateWorker"
+import { startDeadlineWorker } from "./workers/deadlineWorker"
 import { uploadRouter } from "./routes/upload"
 import { webhookRouter } from "./routes/webhook"
 
@@ -76,6 +77,7 @@ async function start() {
   await connectDB()
   await redis.connect()
   startWorker(io)
+  startDeadlineWorker()
 
   httpServer.listen(env.PORT, () => {
     logger.info({ port: env.PORT }, "Server running")

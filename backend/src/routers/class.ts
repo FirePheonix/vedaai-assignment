@@ -28,7 +28,7 @@ export const classRouter = router({
       id: c._id.toString(),
       name: c.name,
       joinCode: c.joinCode,
-      studentCount: c.studentIds.length,
+      studentCount: (c.studentIds ?? []).length,
       createdAt: c.createdAt.toISOString(),
     }))
   }),
@@ -67,7 +67,7 @@ export const classRouter = router({
       const cls = await Class.findOne({ _id: input.classId, userId: ctx.userId }).lean()
       if (!cls) throw new TRPCError({ code: "NOT_FOUND", message: "Class not found" })
 
-      const students = await User.find({ clerkId: { $in: cls.studentIds } }).lean()
+      const students = await User.find({ clerkId: { $in: cls.studentIds ?? [] } }).lean()
       return students.map((s) => ({
         studentId: s.clerkId,
         name: s.name,

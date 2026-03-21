@@ -14,8 +14,9 @@ export function useSocket(assignmentId: string | null) {
     if (!assignmentId) return
 
     const socket = io(API_URL, {
-      transports: ["websocket"],
-      reconnectionAttempts: 5,
+      transports: ["websocket", "polling"],
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
     })
 
     socketRef.current = socket
