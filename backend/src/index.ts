@@ -23,6 +23,7 @@ const app = express()
 const httpServer = http.createServer(app)
 
 export const io = new SocketIOServer(httpServer, {
+  transports: ["websocket"],
   cors: {
     origin: env.FRONTEND_URL,
     methods: ["GET", "POST"],
