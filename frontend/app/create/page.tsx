@@ -26,12 +26,15 @@ function ClassSelector({
   register,
   errors,
   setValue,
+  onClassSelect,
 }: {
   register: ReturnType<typeof useForm<AssignmentFormData>>["register"]
   errors: ReturnType<typeof useForm<AssignmentFormData>>["formState"]["errors"]
   setValue: ReturnType<typeof useForm<AssignmentFormData>>["setValue"]
+  onClassSelect: (classId: string | null) => void
 }) {
   const { data: classes = [] } = trpc.class.list.useQuery()
+  const [activeClassId, setActiveClassId] = useState<string | null>(null)
 
   return (
     <div>
@@ -41,8 +44,18 @@ function ClassSelector({
             <button
               key={cls.id}
               type="button"
-              onClick={() => setValue("className", cls.name, { shouldValidate: true })}
-              className="px-3 py-1.5 bg-violet-50 text-violet-700 rounded-full text-xs font-bold hover:bg-violet-100 transition-colors"
+              onClick={() => {
+                setValue("className", cls.name, { shouldValidate: true })
+                const newId = activeClassId === cls.id ? null : cls.id
+                setActiveClassId(newId)
+                onClassSelect(newId)
+              }}
+              className={cn(
+                "px-3 py-1.5 rounded-full text-xs font-bold transition-colors",
+                activeClassId === cls.id
+                  ? "bg-violet-600 text-white"
+                  : "bg-violet-50 text-violet-700 hover:bg-violet-100"
+              )}
             >
               {cls.name}
             </button>
@@ -51,6 +64,12 @@ function ClassSelector({
       )}
       <input
         {...register("className")}
+        onChange={(e) => {
+          register("className").onChange(e)
+          // If user types manually, clear the classId selection
+          onClassSelect(null)
+          setActiveClassId(null)
+        }}
         placeholder={classes.length > 0 ? "Pick above or type custom…" : "e.g. Grade 8B"}
         className={cn(
           "w-full bg-white border border-gray-100/50 rounded-2xl px-5 py-3.5 text-normal text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-200 shadow-sm",
@@ -93,6 +112,7 @@ export default function CreateAssignmentPage() {
   const [sources, setSources] = useState<UploadedSource[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const [selectedClassId, setSelectedClassId] = useState<string | null>(null)
   const createMutation = trpc.assignment.create.useMutation()
   const generateMutation = trpc.assignment.generate.useMutation()
 
@@ -202,6 +222,7 @@ export default function CreateAssignmentPage() {
     const { jobId } = await generateMutation.mutateAsync({
       id: assignmentId,
       className: data.className,
+      ...(selectedClassId ? { classId: selectedClassId } : {}),
     })
     setJobId(jobId ?? "")
     setJobStatus("queued")
@@ -309,7 +330,7 @@ export default function CreateAssignmentPage() {
               </div>
               <div>
                 <label className="block text-normal font-extrabold text-gray-900 mb-2">Class</label>
-                <ClassSelector register={register} errors={errors} setValue={setValue} />
+                <ClassSelector register={register} errors={errors} setValue={setValue} onClassSelect={setSelectedClassId} />
               </div>
             </div>
 

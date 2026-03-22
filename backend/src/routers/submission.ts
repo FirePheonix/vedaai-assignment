@@ -159,52 +159,68 @@ export const submissionRouter = router({
     }
   }),
 
-  getTeacherAnalytics: teacherProcedure.query(async ({ ctx }) => {
-    const assignments = await Assignment.find({ userId: ctx.userId }).lean()
-    const assignmentIds = assignments.map((a) => a._id)
+  getTeacherAnalytics: teacherProcedure
+    .input(z.object({ classId: z.string().optional() }).optional())
+    .query(async ({ input, ctx }) => {
+      const assignmentQuery: Record<string, unknown> = { userId: ctx.userId }
+      if (input?.classId) assignmentQuery.classId = input.classId
 
-    const submissions = await Submission.find({ assignmentId: { $in: assignmentIds } }).lean()
-    const graded = submissions.filter(
-      (s) =>
-        s.status === "graded" && s.totalMarksAwarded !== null && s.totalMarksAwarded !== undefined
-    )
-    const scores = graded.map((s) => (s.totalMarksAwarded! / s.maxMarks) * 100)
+      const assignments = await Assignment.find(assignmentQuery).lean()
+      const assignmentIds = assignments.map((a) => a._id)
 
-    const avgScore = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : 0
-    const topScore = scores.length ? Math.max(...scores) : 0
-    const lowestScore = scores.length ? Math.min(...scores) : 0
-    const sorted = [...scores].sort((a, b) => a - b)
-    const medianScore = sorted.length ? sorted[Math.floor(sorted.length / 2)] : 0
+      // Get class size for submitted/not submitted gauge
+      let totalStudents = 0
+      if (input?.classId) {
+        const cls = await Class.findOne({ _id: input.classId, userId: ctx.userId }).lean()
+        totalStudents = cls ? (cls.studentIds?.length ?? 0) : 0
+      } else {
+        const classes = await Class.find({ userId: ctx.userId }).lean()
+        totalStudents = classes.reduce((sum, c) => sum + (c.studentIds?.length ?? 0), 0)
+      }
 
-    const gradeBuckets = { A: 0, B: 0, C: 0, D: 0, belowD: 0 }
-    scores.forEach((s) => {
-      if (s >= 80) gradeBuckets.A++
-      else if (s >= 60) gradeBuckets.B++
-      else if (s >= 40) gradeBuckets.C++
-      else if (s >= 20) gradeBuckets.D++
-      else gradeBuckets.belowD++
-    })
+      const submissions = await Submission.find({ assignmentId: { $in: assignmentIds } }).lean()
+      const graded = submissions.filter(
+        (s) =>
+          s.status === "graded" && s.totalMarksAwarded !== null && s.totalMarksAwarded !== undefined
+      )
+      const scores = graded.map((s) => (s.totalMarksAwarded! / s.maxMarks) * 100)
 
-    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-    const gradedThisWeek = graded.filter((s) => s.gradedAt && s.gradedAt >= weekAgo).length
+      const avgScore = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : 0
+      const topScore = scores.length ? Math.max(...scores) : 0
+      const lowestScore = scores.length ? Math.min(...scores) : 0
+      const sorted = [...scores].sort((a, b) => a - b)
+      const medianScore = sorted.length ? sorted[Math.floor(sorted.length / 2)] : 0
 
-    const feedbacks = graded
-      .filter((s) => s.feedback && s.feedback.trim().length > 0)
-      .map((s) => s.feedback!)
-      .slice(0, 30)
+      const gradeBuckets = { A: 0, B: 0, C: 0, D: 0, belowD: 0 }
+      scores.forEach((s) => {
+        if (s >= 80) gradeBuckets.A++
+        else if (s >= 60) gradeBuckets.B++
+        else if (s >= 40) gradeBuckets.C++
+        else if (s >= 20) gradeBuckets.D++
+        else gradeBuckets.belowD++
+      })
 
-    return {
-      totalSubmissions: submissions.length,
-      gradedCount: graded.length,
-      gradedThisWeek,
-      avgScore: Math.round(avgScore),
-      topScore: Math.round(topScore),
-      lowestScore: Math.round(lowestScore),
-      medianScore: Math.round(medianScore),
-      gradeBuckets,
-      feedbacks,
-    }
-  }),
+      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+      const gradedThisWeek = graded.filter((s) => s.gradedAt && s.gradedAt >= weekAgo).length
+
+      const feedbacks = graded
+        .filter((s) => s.feedback && s.feedback.trim().length > 0)
+        .map((s) => s.feedback!)
+        .slice(0, 30)
+
+      return {
+        totalSubmissions: submissions.length,
+        totalStudents,
+        gradedCount: graded.length,
+        gradedThisWeek,
+        avgScore: Math.round(avgScore),
+        topScore: Math.round(topScore),
+        lowestScore: Math.round(lowestScore),
+        medianScore: Math.round(medianScore),
+        gradeBuckets,
+        feedbacks,
+      }
+    }),
 
   getStudentAnalytics: studentProcedure.query(async ({ ctx }) => {
     const submissions = await Submission.find({ studentId: ctx.userId }).lean()

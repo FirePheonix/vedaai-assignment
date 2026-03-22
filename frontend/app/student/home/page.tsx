@@ -3,7 +3,9 @@
 import { useRouter } from "next/navigation"
 import { useUser } from "@clerk/nextjs"
 import { BookOpen, Clock, CheckCircle, Hash, Loader2 } from "lucide-react"
+import { motion } from "framer-motion"
 import { trpc } from "@/lib/trpc"
+import { fadeUp, fadeIn, scaleIn, stagger } from "@/lib/motion"
 
 function statusConfig(status: string | null) {
   if (status === "graded") return { label: "Graded", color: "bg-green-100 text-green-700" }
@@ -29,16 +31,21 @@ export default function StudentHomePage() {
   return (
     <div className="flex flex-col h-full bg-[#f2f4f7] md:bg-transparent overflow-hidden px-4 md:px-0 py-4 md:pr-4 pb-24 md:pb-4">
       <div className="flex-1 overflow-y-auto">
-        {/* Greeting */}
-        <div className="mb-6">
+        <motion.div variants={fadeUp} initial="hidden" animate="show" className="mb-6">
           <p className="text-[13px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">
             Student Dashboard
           </p>
           <h1 className="text-[22px] font-extrabold text-gray-900">Hey, {firstName} 👋</h1>
-        </div>
+        </motion.div>
 
         {assignments.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
+          <motion.div
+            variants={fadeIn}
+            initial="hidden"
+            animate="show"
+            transition={{ delay: 0.15 }}
+            className="flex flex-col items-center justify-center py-20 text-center"
+          >
             <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
               <BookOpen size={28} className="text-gray-300" strokeWidth={1.5} />
             </div>
@@ -51,10 +58,15 @@ export default function StudentHomePage() {
               <Hash size={14} strokeWidth={2.5} />
               Join a Class
             </button>
-          </div>
+          </motion.div>
         ) : (
           <>
-            <div className="flex items-center justify-between mb-4">
+            <motion.div
+              variants={fadeIn}
+              initial="hidden"
+              animate="show"
+              className="flex items-center justify-between mb-4"
+            >
               <h2 className="text-[16px] font-extrabold text-gray-900">Your Assignments</h2>
               <button
                 onClick={() => router.push("/student/join")}
@@ -63,9 +75,14 @@ export default function StudentHomePage() {
                 <Hash size={13} strokeWidth={2.5} />
                 Join class
               </button>
-            </div>
+            </motion.div>
 
-            <div className="flex flex-col gap-3">
+            <motion.div
+              variants={stagger(0.07)}
+              initial="hidden"
+              animate="show"
+              className="flex flex-col gap-3"
+            >
               {assignments.map((a) => {
                 const { label, color } = statusConfig(a.submissionStatus)
                 const isGraded = a.submissionStatus === "graded"
@@ -77,8 +94,9 @@ export default function StudentHomePage() {
                 }
 
                 return (
-                  <div
+                  <motion.div
                     key={a.id}
+                    variants={scaleIn}
                     onClick={handleClick}
                     className={`bg-white rounded-[20px] p-5 shadow-sm flex items-start gap-4 ${!isSubmitted ? "cursor-pointer hover:shadow-md transition-shadow" : ""}`}
                   >
@@ -118,10 +136,10 @@ export default function StudentHomePage() {
                         </div>
                       )}
                     </div>
-                  </div>
+                  </motion.div>
                 )
               })}
-            </div>
+            </motion.div>
           </>
         )}
       </div>

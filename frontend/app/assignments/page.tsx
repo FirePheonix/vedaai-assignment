@@ -5,7 +5,9 @@ import Link from "next/link"
 import { Search, ListFilter, MoreVertical, Plus } from "lucide-react"
 import Header from "@/components/ui/Header"
 import { useRouter } from "next/navigation"
+import { motion } from "framer-motion"
 import { trpc } from "@/lib/trpc"
+import { fadeUp, fadeIn, scaleIn, stagger } from "@/lib/motion"
 
 function AssignmentCard({
   id,
@@ -28,11 +30,11 @@ function AssignmentCard({
   }
 
   return (
-    <div
+    <motion.div
+      variants={scaleIn}
       onClick={handleCardClick}
       className="bg-white rounded-[32px] p-6 md:p-7 md:pt-6 relative shadow-[0_2px_12px_rgba(0,0,0,0.02)] border border-gray-100/30 hover:shadow-md hover:border-orange-200 transition-all cursor-pointer flex flex-col justify-between h-[160px] md:h-[210px]"
     >
-      {/* Title row */}
       <div className="flex items-start justify-between">
         <h3 className="text-heading text-[18px] md:text-heading text-gray-900 line-clamp-2 pr-4">
           {title}
@@ -56,7 +58,12 @@ function AssignmentCard({
                   setMenuOpen(false)
                 }}
               />
-              <div className="absolute right-0 top-9 z-20 bg-white border border-gray-100/50 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] py-2 w-48 overflow-hidden">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 0.15, ease: "easeOut" }}
+                className="absolute right-0 top-9 z-20 bg-white border border-gray-100/50 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] py-2 w-48 overflow-hidden"
+              >
                 <Link
                   href={`/paper/${id}`}
                   className="block px-5 py-3 text-[14px] font-medium text-gray-700 hover:bg-gray-50 transition-colors"
@@ -68,13 +75,12 @@ function AssignmentCard({
                 <button className="block w-full text-left px-5 py-3 text-[14px] font-medium text-red-500 hover:bg-red-50 transition-colors">
                   Delete
                 </button>
-              </div>
+              </motion.div>
             </>
           )}
         </div>
       </div>
 
-      {/* Footer Dates */}
       <div className="flex flex-col md:flex-row md:items-center justify-between text-[13px] md:text-normal mt-auto md:pt-2 gap-1 md:gap-4 md:flex-wrap">
         <div className="flex-1 min-w-max">
           <span className="font-extrabold text-gray-900">Assigned on</span>
@@ -87,7 +93,7 @@ function AssignmentCard({
           <span className="text-gray-400"> : {dueDate}</span>
         </div>
       </div>
-    </div>
+    </motion.div>
   )
 }
 
@@ -100,10 +106,11 @@ export default function AssignmentsPage() {
 
   return (
     <>
-      <Header breadcrumb="Assignment" />
+      <motion.div variants={fadeIn} initial="hidden" animate="show">
+        <Header breadcrumb="Assignment" />
+      </motion.div>
 
       <main className="flex-1 overflow-y-auto px-5 md:px-8 py-4 md:py-7 relative h-[calc(100vh-70px)] md:h-full">
-        {/* On Mobile, visual style is exactly as the screenshot: the back arrow, then text */}
         <div className="md:hidden flex items-center justify-center relative mb-8">
           <button
             type="button"
@@ -127,8 +134,12 @@ export default function AssignmentsPage() {
           <h1 className="text-heading text-[16px] text-gray-900 font-extrabold">Assignments</h1>
         </div>
 
-        {/* Page title (Desktop) */}
-        <div className="hidden md:block mb-6 ml-2">
+        <motion.div
+          variants={fadeUp}
+          initial="hidden"
+          animate="show"
+          className="hidden md:block mb-6 ml-2"
+        >
           <div className="flex items-center gap-2 mb-1">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
             <h1 className="text-heading text-gray-900 mt-1">Assignments</h1>
@@ -136,10 +147,15 @@ export default function AssignmentsPage() {
           <p className="text-normal text-gray-400 ml-4 mt-1.5">
             Manage and create assignments for your classes.
           </p>
-        </div>
+        </motion.div>
 
-        {/* Toolbar */}
-        <div className="flex items-center mx-0 md:mx-1 mb-6 md:mb-8 bg-white rounded-2xl md:rounded-full shadow-sm md:shadow-[0_2px_10px_rgba(0,0,0,0.02)] pl-5 md:pl-6 pr-2 py-1 md:py-2 border border-gray-100/30">
+        <motion.div
+          variants={fadeUp}
+          initial="hidden"
+          animate="show"
+          transition={{ delay: 0.1 }}
+          className="flex items-center mx-0 md:mx-1 mb-6 md:mb-8 bg-white rounded-2xl md:rounded-full shadow-sm md:shadow-[0_2px_10px_rgba(0,0,0,0.02)] pl-5 md:pl-6 pr-2 py-1 md:py-2 border border-gray-100/30"
+        >
           <button className="flex items-center gap-2 text-normal text-gray-400 hover:text-gray-700 transition-colors shrink-0">
             <ListFilter size={18} strokeWidth={2} />
             Filter
@@ -155,10 +171,14 @@ export default function AssignmentsPage() {
               className="bg-transparent w-full py-3 text-normal text-gray-700 placeholder:text-gray-300 outline-none"
             />
           </div>
-        </div>
+        </motion.div>
 
-        {/* Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 px-1 pb-40">
+        <motion.div
+          variants={stagger(0.07)}
+          initial="hidden"
+          animate="show"
+          className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 px-1 pb-40"
+        >
           {filtered.map((a) => (
             <AssignmentCard
               key={a.id}
@@ -170,18 +190,24 @@ export default function AssignmentsPage() {
             />
           ))}
           {filtered.length === 0 && (
-            <div className="col-span-1 md:col-span-2 text-center py-16 text-gray-400 font-medium">
+            <motion.div
+              variants={fadeIn}
+              className="col-span-1 md:col-span-2 text-center py-16 text-gray-400 font-medium"
+            >
               No assignments found.
-            </div>
+            </motion.div>
           )}
-        </div>
+        </motion.div>
       </main>
 
-      {/* Fade mask for bottom area */}
       <div className="hidden md:block fixed bottom-0 left-[260px] right-0 h-40 bg-gradient-to-t from-[#f5f6f8] via-[#f5f6f8]/90 to-transparent pointer-events-none z-20"></div>
 
-      {/* Floating CTA */}
-      <div className="fixed bottom-24 right-5 md:bottom-10 md:left-[calc(50%+130px)] md:-translate-x-1/2 md:right-auto z-30">
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3, duration: 0.4, ease: "easeOut" }}
+        className="fixed bottom-24 right-5 md:bottom-10 md:left-[calc(50%+130px)] md:-translate-x-1/2 md:right-auto z-30"
+      >
         <Link
           href="/create"
           className="flex items-center justify-center gap-2.5 md:bg-[#1c1c1c] bg-white md:text-white text-[#ff5722] md:rounded-[24px] rounded-full w-14 h-14 md:w-auto md:h-auto md:px-7 md:py-4 text-sidebar-item shadow-[0_8px_30px_rgba(0,0,0,0.12)] md:shadow-[0_12px_24px_rgba(0,0,0,0.15)] md:hover:bg-black transition-all hover:-translate-y-1"
@@ -189,7 +215,7 @@ export default function AssignmentsPage() {
           <Plus size={24} className="md:text-white stroke-[2.5px] md:stroke-2" />
           <span className="hidden md:inline">Create Assignment</span>
         </Link>
-      </div>
+      </motion.div>
     </>
   )
 }

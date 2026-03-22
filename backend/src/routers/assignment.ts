@@ -44,6 +44,20 @@ export const assignmentRouter = router({
   list: protectedProcedure.query(async ({ ctx }) => {
     const assignments = await Assignment.find({ userId: ctx.userId }).sort({ createdAt: -1 }).lean()
 
+    const assignmentIds = assignments.map((a) => a._id)
+    const [submissionCounts, classes] = await Promise.all([
+      Submission.aggregate([
+        { $match: { assignmentId: { $in: assignmentIds } } },
+        { $group: { _id: "$assignmentId", count: { $sum: 1 } } },
+      ]),
+      Class.find({ userId: ctx.userId }).lean(),
+    ])
+
+    const subCountMap = Object.fromEntries(
+      submissionCounts.map((s: { _id: unknown; count: number }) => [s._id!.toString(), s.count])
+    )
+    const classMap = Object.fromEntries(classes.map((c) => [c._id.toString(), c.name]))
+
     return assignments.map((a) => ({
       id: a._id.toString(),
       title: a.title,
@@ -52,11 +66,15 @@ export const assignmentRouter = router({
       status: a.status,
       assignedOn: a.createdAt.toISOString(),
       paperId: a.paperId?.toString() ?? null,
+      isPublished: a.isPublished ?? false,
+      classId: a.classId?.toString() ?? null,
+      className: a.classId ? (classMap[a.classId.toString()] ?? null) : null,
+      submittedCount: subCountMap[a._id.toString()] ?? 0,
     }))
   }),
 
   generate: protectedProcedure
-    .input(z.object({ id: z.string(), className: z.string().min(1) }))
+    .input(z.object({ id: z.string(), className: z.string().min(1), classId: z.string().optional() }))
     .mutation(async ({ input, ctx }) => {
       const assignment = await Assignment.findOne({ _id: input.id, userId: ctx.userId })
 
@@ -78,7 +96,9 @@ export const assignmentRouter = router({
         sourceIds: assignment.sourceIds ?? [],
       })
 
-      await Assignment.findByIdAndUpdate(input.id, { jobId: job.id })
+      const updateFields: Record<string, unknown> = { jobId: job.id }
+      if (input.classId) updateFields.classId = input.classId
+      await Assignment.findByIdAndUpdate(input.id, updateFields)
 
       logger.info({ assignmentId: input.id, jobId: job.id }, "Generation job queued")
 
