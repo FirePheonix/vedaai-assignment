@@ -1,4 +1,35 @@
-# VedaAI
+<h1 align="center">Veda AI Assignment</h1>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Next.js-Frontend-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" />
+  <img src="https://img.shields.io/badge/Vercel-Deployment-black?style=for-the-badge&logo=vercel&logoColor=white" />
+  <img src="https://img.shields.io/badge/Clerk-Authentication-6C47FF?style=for-the-badge&logo=clerk&logoColor=white" />
+  <img src="https://img.shields.io/badge/tRPC-Type_Safe_API-2596BE?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Zustand-State_Management-3E4E88?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Socket.IO-Realtime-010101?style=for-the-badge&logo=socketdotio&logoColor=white" />
+  <img src="https://img.shields.io/badge/React_PDF-PDF_Generation-FF6F61?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Express.js-Backend-000000?style=for-the-badge&logo=express&logoColor=white" />
+  <img src="https://img.shields.io/badge/Railway-Hosting-0B0D0E?style=for-the-badge&logo=railway&logoColor=white" />
+  <img src="https://img.shields.io/badge/BullMQ-Job_Queue-EA580C?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Redis-Queue_Storage-DC382D?style=for-the-badge&logo=redis&logoColor=white" />
+  <img src="https://img.shields.io/badge/MongoDB-Database-47A248?style=for-the-badge&logo=mongodb&logoColor=white" />
+  <img src="https://img.shields.io/badge/Cloudinary-File_Uploads-3448C5?style=for-the-badge&logo=cloudinary&logoColor=white" />
+  <img src="https://img.shields.io/badge/Multer-File_Handling-FFB020?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/OpenAI-GPT--4o-412991?style=for-the-badge&logo=openai&logoColor=white" />
+</p>
+
+
+## Complete commit by commit reference (YOUTUBE):
+- Commits 1 and 2: [Frontend Scaffold](https://www.youtube.com/watch?v=subUkLrb940&list=PLnSq7q9t6nwHqYHazVOFG9pl2jLmcZvR_&index=1)
+- Commits 3 and 4: [Backend Scaffold](https://www.youtube.com/watch?v=Zgb0ww7txr8&list=PLnSq7q9t6nwHqYHazVOFG9pl2jLmcZvR_&index=2)
+- Commits 5 and 6: [BullMQ + Redis Set Up Discussion](https://www.youtube.com/watch?v=mvvEo21RM7E&list=PLnSq7q9t6nwHqYHazVOFG9pl2jLmcZvR_&index=3)
+- Production Commits (vercel + railway): [Deployment Overview](https://www.youtube.com/watch?v=h-1kA92uKhs&list=PLnSq7q9t6nwHqYHazVOFG9pl2jLmcZvR_&index=4)
+- System Design: [MVP's System Design](https://www.youtube.com/watch?v=Ze8xURLUGsE&list=PLnSq7q9t6nwHqYHazVOFG9pl2jLmcZvR_&index=5)
+- Class Diagram and Use Case Diagram: [OOPs and How To Use](https://www.youtube.com/watch?v=YM-hIgXQgpA&list=PLnSq7q9t6nwHqYHazVOFG9pl2jLmcZvR_&index=6)
+- Final Product Demo: [Veda AI Assignment Complete Product Overview](https://www.youtube.com/watch?v=7FlkY7Tu1bQ&list=PLnSq7q9t6nwHqYHazVOFG9pl2jLmcZvR_&index=7)
+
+
+---
 
 VedaAI is an AI-powered assignment platform built for teachers and students.
 Teachers create exam papers in seconds by describing a topic — the AI generates structured question papers with an answer key.
@@ -6,6 +37,24 @@ Papers are published to classes, students join with a short code, upload their h
 The platform handles the full lifecycle: paper generation, class management, student submissions, grading, and analytics.
 Built on Next.js, Express, MongoDB, BullMQ, and OpenAI — with real-time progress streaming via Socket.IO and end-to-end type safety via tRPC.
 Deployed on Vercel (frontend) and Railway (backend), with Clerk for authentication.
+
+---
+
+## Product UI Image:
+<img width="1915" height="909" alt="image" src="https://github.com/user-attachments/assets/35138f2f-1561-4736-8615-5c789f99be81" />
+
+## System Design Architectures: 
+
+<img width="2394" height="2072" alt="diagram-export-3-22-2026-2_46_06-PM" src="https://github.com/user-attachments/assets/d5517383-5cf1-4d69-86d8-0efb7f703e6f" />
+
+## Use Case Diagram
+
+<img width="1010" height="2304" alt="diagram-export-3-22-2026-2_47_00-PM" src="https://github.com/user-attachments/assets/b599af6c-9510-44f3-9469-a1dbad273d49" />
+
+## Class Diagram
+
+<img width="1412" height="917" alt="diagram-export-3-22-2026-2_46_49-PM" src="https://github.com/user-attachments/assets/6015ce1d-7272-412a-978a-15f1f675232b" />
+
 
 ---
 
