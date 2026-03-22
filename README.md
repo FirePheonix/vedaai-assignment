@@ -1,6 +1,72 @@
 # VedaAI
 
-AI-powered question paper platform for teachers and students. Teachers generate exam papers from prompts, publish them to classes, and grade student submissions. Students join classes with a code, read their assigned papers, upload handwritten answer sheets, and view their results.
+VedaAI is an AI-powered assignment platform built for teachers and students.
+Teachers create exam papers in seconds by describing a topic — the AI generates structured question papers with an answer key.
+Papers are published to classes, students join with a short code, upload their handwritten answer sheets, and get their results back with teacher feedback.
+The platform handles the full lifecycle: paper generation, class management, student submissions, grading, and analytics.
+Built on Next.js, Express, MongoDB, BullMQ, and OpenAI — with real-time progress streaming via Socket.IO and end-to-end type safety via tRPC.
+Deployed on Vercel (frontend) and Railway (backend), with Clerk for authentication.
+
+---
+
+## Local setup
+
+### Prerequisites
+- Node.js 18+
+- A [MongoDB Atlas](https://cloud.mongodb.com) free cluster
+- An [Upstash Redis](https://upstash.com) free database (use the **TCP** URL, not REST)
+- An [OpenAI](https://platform.openai.com) API key
+- A [Clerk](https://clerk.com) application (get Secret Key + Webhook Secret)
+- A [Cloudinary](https://cloudinary.com) free account
+
+### Backend
+
+```bash
+cp backend/.env.example backend/.env
+# Fill in: MONGODB_URI, REDIS_URL, OPENAI_API_KEY,
+#          CLERK_SECRET_KEY, CLERK_WEBHOOK_SECRET,
+#          CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET
+cd backend && npm install && npm run dev
+```
+
+Server runs at `http://localhost:4000` — Bull Board at `http://localhost:4000/admin/queues`.
+
+### Frontend
+
+```bash
+cd frontend && npm install && npm run dev
+```
+
+App runs at `http://localhost:3000`.
+
+> **Required Clerk step:** In your Clerk Dashboard → Configure → Sessions → Customize session token, add:
+> ```json
+> { "metadata": "{{user.public_metadata}}" }
+> ```
+> This embeds the user role in the JWT so the middleware can read it without a database call.
+
+---
+
+## Running tests
+
+Backend tests use an in-memory MongoDB — no Atlas or Redis needed.
+
+```bash
+cd backend && npm test
+```
+
+Expected output:
+```
+Test Files  2 passed (2)
+      Tests  13 passed (13)
+```
+
+Watch mode:
+```bash
+npm run test:watch
+```
+
+The frontend has no automated test suite — run `npm run lint` to check for type and lint errors.
 
 ---
 
@@ -212,63 +278,6 @@ publicProcedure
    - `validating` — parses and validates the JSON response against the paper schema
    - `saving` — writes `QuestionPaper` doc, updates `Assignment.status = "done"`, sets `paperId`
 3. Socket emits `job:done` with `paperId` → browser navigates to `/paper/[id]`
-
----
-
-## Running tests
-
-Tests live in the backend and use an in-memory MongoDB — no Atlas or Redis needed.
-
-```bash
-cd backend
-npm install
-npm test
-```
-
-Expected output:
-```
-Test Files  2 passed (2)
-      Tests  13 passed (13)
-```
-
-Watch mode:
-```bash
-npm run test:watch
-```
-
----
-
-## Local setup
-
-### Backend
-
-Copy and fill in the env file:
-```bash
-cp backend/.env.example backend/.env
-```
-
-Required:
-- `MONGODB_URI` — [MongoDB Atlas](https://cloud.mongodb.com) free cluster
-- `REDIS_URL` — [Upstash](https://upstash.com) free database (TCP URL, not REST)
-- `OPENAI_API_KEY`
-- `CLERK_SECRET_KEY` — from Clerk Dashboard → API Keys
-- `CLERK_WEBHOOK_SECRET` — from Clerk Dashboard → Webhooks → your endpoint
-- `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` — [Cloudinary](https://cloudinary.com) free tier
-
-```bash
-cd backend && npm install && npm run dev
-```
-
-Server: `http://localhost:4000`
-Bull Board: `http://localhost:4000/admin/queues`
-
-### Frontend
-
-```bash
-cd frontend && npm install && npm run dev
-```
-
-App: `http://localhost:3000`
 
 ---
 
