@@ -1,5 +1,6 @@
 import { Worker } from "bullmq"
 import OpenAI from "openai"
+import { createClerkClient } from "@clerk/backend"
 import { env } from "@/env"
 import { logger } from "@/lib/logger"
 import { Assignment } from "@/models/Assignment"
@@ -10,6 +11,8 @@ import { embedTexts, retrieveChunks } from "@/lib/embed"
 import { mailPaperReady } from "@/lib/emails"
 import type { GenerateJobData } from "@/lib/queue"
 import type { Server as SocketIOServer } from "socket.io"
+
+const clerkClient = createClerkClient({ secretKey: env.CLERK_SECRET_KEY })
 
 const openai = new OpenAI()
 
@@ -131,21 +134,25 @@ export async function processGenerateJob(data: GenerateJobData, emit: Emitter) {
   if (!assignment) {
     logger.warn({ assignmentId }, "mailPaperReady: assignment not found")
   } else {
-    const teacher = await User.findOne({ clerkId: assignment.userId }).lean()
-    if (!teacher) {
-      logger.warn({ clerkId: assignment.userId }, "mailPaperReady: teacher User doc not found")
-    } else if (!teacher.email) {
-      logger.warn({ clerkId: assignment.userId }, "mailPaperReady: teacher has no email")
-    } else {
-      logger.info({ to: teacher.email }, "Sending paper-ready email")
-      mailPaperReady({
-        teacherEmail: teacher.email,
-        teacherName: teacher.name,
-        assignmentTitle: assignment.title,
-        subject: assignment.subject,
-        assignmentId,
-        frontendUrl: env.FRONTEND_URL,
-      }).catch((err) => logger.error({ err }, "mailPaperReady failed"))
+    try {
+      const clerkUser = await clerkClient.users.getUser(assignment.userId)
+      const email = clerkUser.emailAddresses?.[0]?.emailAddress ?? ""
+      const name = [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ") || "Teacher"
+      if (!email) {
+        logger.warn({ clerkId: assignment.userId }, "mailPaperReady: teacher has no email in Clerk")
+      } else {
+        logger.info({ to: email }, "Sending paper-ready email")
+        mailPaperReady({
+          teacherEmail: email,
+          teacherName: name,
+          assignmentTitle: assignment.title,
+          subject: assignment.subject,
+          assignmentId,
+          frontendUrl: env.FRONTEND_URL,
+        }).catch((err) => logger.error({ err }, "mailPaperReady failed"))
+      }
+    } catch (err) {
+      logger.warn({ err, clerkId: assignment.userId }, "mailPaperReady: failed to fetch teacher from Clerk")
     }
   }
 
