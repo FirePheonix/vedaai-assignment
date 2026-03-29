@@ -27,6 +27,7 @@
 - System Design: [MVP's System Design](https://www.youtube.com/watch?v=Ze8xURLUGsE&list=PLnSq7q9t6nwHqYHazVOFG9pl2jLmcZvR_&index=5)
 - Class Diagram and Use Case Diagram: [OOPs and How To Use](https://www.youtube.com/watch?v=YM-hIgXQgpA&list=PLnSq7q9t6nwHqYHazVOFG9pl2jLmcZvR_&index=6)
 - Final Product Demo: [Veda AI Assignment Complete Product Overview](https://www.youtube.com/watch?v=7FlkY7Tu1bQ&list=PLnSq7q9t6nwHqYHazVOFG9pl2jLmcZvR_&index=7)
+- Post Interview Commit: [UX Friendly and Optimized Way of JSON Streaming](https://youtu.be/wo33sXtagLE)
 
 
 ---
