@@ -5,6 +5,7 @@ export const QuestionSchema = z.object({
   text: z.string(),
   difficulty: z.enum(["Easy", "Moderate", "Challenging"]),
   marks: z.number(),
+  options: z.array(z.string()).optional(), // MCQ options
 })
 
 export const SectionSchema = z.object({
