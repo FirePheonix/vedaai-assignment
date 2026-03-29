@@ -28,12 +28,49 @@ export function useSocket(assignmentId: string | null) {
     socket.on("job:progress", ({ step, message }: { step: string; message: string }) => {
       addJobStep(message)
       const progressMap: Record<string, number> = {
-        generating: 30,
-        validating: 70,
-        saving: 90,
+        retrieving: 5,
+        generating: 10,
+        validating: 90,
+        saving: 95,
       }
       setJobProgress(progressMap[step] ?? 50)
     })
+
+    socket.on("job:stream:start", ({ totalQuestions }: { totalQuestions: number }) => {
+      useAssignmentStore.getState().setTotalQuestions(totalQuestions)
+    })
+
+    socket.on("job:stream:text", ({ text }: { text: string; progress: number }) => {
+      useAssignmentStore.getState().setCurrentStreamText(text)
+    })
+
+    socket.on(
+      "job:stream:question",
+      ({
+        question,
+        sectionId,
+        sectionTitle,
+        questionType,
+      }: {
+        question: {
+          id: string
+          text: string
+          difficulty: "Easy" | "Moderate" | "Challenging"
+          marks: number
+          options?: string[]
+        }
+        sectionId: string
+        sectionTitle: string
+        questionType: string
+      }) => {
+        useAssignmentStore.getState().addStreamedQuestion({
+          ...question,
+          sectionId,
+          sectionTitle,
+          questionType,
+        })
+      }
+    )
 
     socket.on("job:done", ({ paperId }: { paperId: string }) => {
       setJobProgress(100)

@@ -3,6 +3,17 @@ import type { AssignmentFormData, QuestionPaper } from "@/lib/schemas"
 
 type JobStatus = "idle" | "queued" | "processing" | "done" | "failed"
 
+export interface StreamedQuestion {
+  id: string
+  text: string
+  difficulty: "Easy" | "Moderate" | "Challenging"
+  marks: number
+  options?: string[]
+  sectionId: string
+  sectionTitle: string
+  questionType: string
+}
+
 interface AssignmentStore {
   formData: AssignmentFormData | null
   assignmentId: string | null
@@ -14,6 +25,11 @@ interface AssignmentStore {
   paper: QuestionPaper | null
   errorMessage: string | null
 
+  // Streaming state
+  streamedQuestions: StreamedQuestion[]
+  totalQuestions: number
+  currentStreamText: string
+
   setFormData: (data: AssignmentFormData) => void
   setAssignmentId: (id: string) => void
   setJobId: (id: string) => void
@@ -24,6 +40,10 @@ interface AssignmentStore {
   setPaper: (paper: QuestionPaper) => void
   setError: (msg: string) => void
   reset: () => void
+
+  setTotalQuestions: (n: number) => void
+  setCurrentStreamText: (text: string) => void
+  addStreamedQuestion: (q: StreamedQuestion) => void
 }
 
 const initialState = {
@@ -36,6 +56,9 @@ const initialState = {
   paperId: null,
   paper: null,
   errorMessage: null,
+  streamedQuestions: [],
+  totalQuestions: 0,
+  currentStreamText: "",
 }
 
 export const useAssignmentStore = create<AssignmentStore>((set) => ({
@@ -51,4 +74,16 @@ export const useAssignmentStore = create<AssignmentStore>((set) => ({
   setPaper: (paper) => set({ paper }),
   setError: (msg) => set({ errorMessage: msg }),
   reset: () => set(initialState),
+
+  setTotalQuestions: (n) => set({ totalQuestions: n }),
+  setCurrentStreamText: (text) => set({ currentStreamText: text }),
+  addStreamedQuestion: (q) =>
+    set((state) => ({
+      streamedQuestions: [...state.streamedQuestions, q],
+      currentStreamText: "",
+      jobProgress: Math.min(
+        85,
+        Math.round(((state.streamedQuestions.length + 1) / Math.max(state.totalQuestions, 1)) * 85)
+      ),
+    })),
 }))
